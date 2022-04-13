@@ -39,7 +39,7 @@ class CameraXActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        SystemUtil.toFullScreenMode(this)
+        SystemUtil.toFullScreenMode(this)
         binding = ActivityCameraXactivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 

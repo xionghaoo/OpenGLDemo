@@ -60,7 +60,7 @@ class CameraXFragment : Fragment() {
 
     private lateinit var cameraExecutor: ExecutorService
 
-    // 照片输出
+    // 照片输出路径
     private lateinit var outputDirectory: File
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,12 +117,15 @@ class CameraXFragment : Fragment() {
         return cameraProvider?.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) ?: false
     }
 
+    /**
+     * 构建相机用例
+     */
     private fun bindCameraUseCases() {
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = windowManager.getCurrentWindowMetrics().bounds
         Timber.d("Screen metrics: ${metrics.width()} x ${metrics.height()}")
 
-        val screenAspectRatio = aspectRatio(binding.viewFinder.width, binding.viewFinder.height)
+        val screenAspectRatio = aspectRatio(metrics.width(), metrics.height())
         Timber.d("Preview aspect ratio: $screenAspectRatio")
 
         val rotation = binding.viewFinder.display.rotation
@@ -134,7 +137,7 @@ class CameraXFragment : Fragment() {
         // CameraSelector
         val cameraSelector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
 
-        // Preview
+        // Preview 用例
         preview = Preview.Builder()
             // We request aspect ratio but no resolution
             .setTargetAspectRatio(screenAspectRatio)
@@ -142,7 +145,7 @@ class CameraXFragment : Fragment() {
             .setTargetRotation(rotation)
             .build()
 
-        // ImageCapture
+        // ImageCapture 用例
         imageCapture = ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             // We request aspect ratio but no resolution to match preview config, but letting
@@ -154,7 +157,7 @@ class CameraXFragment : Fragment() {
             .setJpegQuality(100)
             .build()
 
-        // ImageAnalysis
+        // ImageAnalysis 用例
         imageAnalyzer = ImageAnalysis.Builder()
             // We request aspect ratio but no resolution
             .setTargetAspectRatio(screenAspectRatio)
@@ -288,6 +291,9 @@ class CameraXFragment : Fragment() {
         }
     }
 
+    /**
+     * 拍照
+     */
     fun takePhoto(leftTop: Point, leftBottom: Point, rightTop: Point, rightBottom: Point) {
 
         // Get a stable reference of the modifiable image capture use case
@@ -318,7 +324,6 @@ class CameraXFragment : Fragment() {
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         val savedUri = output.savedUri ?: Uri.fromFile(photoFile)
                         Log.d(TAG, "Photo capture succeeded: $savedUri")
-
 
                         Timber.d("处理输出图片：thread: ${Thread.currentThread()}")
                         val outputFile = File(output.savedUri!!.path)
