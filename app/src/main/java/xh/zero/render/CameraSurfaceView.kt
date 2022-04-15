@@ -1,4 +1,4 @@
-package xh.zero.camerax
+package xh.zero.render
 
 import android.content.Context
 import android.graphics.SurfaceTexture
@@ -9,11 +9,9 @@ class CameraSurfaceView : GLSurfaceView {
 
     private val renderer: CameraRenderer
 
-    private var onTextureCreated: ((SurfaceTexture) -> Unit)? = null
-
     init {
         setEGLContextClientVersion(2)
-        renderer = CameraRenderer(context, onTextureCreated)
+        renderer = CameraRenderer(context)
         setRenderer(renderer)
         renderMode = RENDERMODE_CONTINUOUSLY
     }
@@ -23,8 +21,8 @@ class CameraSurfaceView : GLSurfaceView {
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
 
 
-    fun setOnTextureCreated(callback: (SurfaceTexture) -> Unit) {
-        onTextureCreated = callback
+    fun setOnTextureCreated(callback: OnTextureCreated) {
+        renderer.setOnTextureCreated(callback)
     }
 
 }

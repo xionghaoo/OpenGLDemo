@@ -2,10 +2,7 @@ package xh.zero.camerax
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.graphics.Point
+import android.graphics.*
 import android.graphics.drawable.ColorDrawable
 import android.media.MediaScannerConnection
 import android.net.Uri
@@ -14,11 +11,13 @@ import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.Surface
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.camera.core.*
+import androidx.camera.core.Camera
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.core.net.toFile
@@ -59,9 +58,12 @@ class CameraXFragment : Fragment() {
     private var imageAnalyzer: ImageAnalysis? = null
 
     private lateinit var cameraExecutor: ExecutorService
+    private lateinit var surfaceExecutor: ExecutorService
 
     // 照片输出路径
     private lateinit var outputDirectory: File
+
+    private lateinit var surfaceTexture: SurfaceTexture
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,16 +84,21 @@ class CameraXFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         // Initialize our background executor
         cameraExecutor = Executors.newSingleThreadExecutor()
-
+        surfaceExecutor = Executors.newSingleThreadExecutor()
         // Determine the output directory
         outputDirectory = getOutputDirectory(requireContext())
 
         windowManager = WindowManager(view.context)
 
-        binding.viewFinder.post {
+        binding.viewFinder.setOnTextureCreated { sfTexture ->
+            surfaceTexture = sfTexture
             displayId = binding.viewFinder.display.displayId
             setupCamera()
         }
+//        binding.viewFinder.post {
+//            displayId = binding.viewFinder.display.displayId
+//            setupCamera()
+//        }
     }
 
     private fun setupCamera() {
@@ -185,7 +192,16 @@ class CameraXFragment : Fragment() {
                 this, cameraSelector, preview, imageCapture, imageAnalyzer)
 
             // Attach the viewfinder's surface provider to preview use case
-            preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+//            preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+            preview?.setSurfaceProvider { request ->
+                val surface = Surface(surfaceTexture)
+                request.provideSurface(surface, surfaceExecutor) { result ->
+                    surface.release()
+                    surfaceTexture.release()
+                    // 0: success
+                    Timber.d("surface used result: ${result.resultCode}")
+                }
+            }
             observeCameraState(camera?.cameraInfo!!)
         } catch (exc: Exception) {
             Timber.e("Use case binding failed: $exc")

@@ -46,19 +46,19 @@ class ShaderProgram(
     }
 
     fun setBool(name: String, value: Boolean) {
-        GLES20.glUniform1i(GLES20.glGetAttribLocation(ID, name), if (value) 1 else 0)
+        GLES20.glUniform1i(GLES20.glGetUniformLocation(ID, name), if (value) 1 else 0)
     }
 
     fun setInt(name: String, value: Int) {
-        GLES20.glUniform1i(GLES20.glGetAttribLocation(ID, name), value)
+        GLES20.glUniform1i(GLES20.glGetUniformLocation(ID, name), value)
     }
 
     fun setFloat(name: String, value: Float) {
-        GLES20.glUniform1f(GLES20.glGetAttribLocation(ID, name), value)
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(ID, name), value)
     }
 
     fun setMat4(name: String, matrix: FloatArray) {
-        GLES20.glUniformMatrix4fv(GLES20.glGetAttribLocation(ID, name), 1, false, matrix, 0)
+        GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(ID, name), 1, false, matrix, 0)
     }
 
     fun destroy() {
@@ -84,7 +84,10 @@ class ShaderProgram(
             GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0)
             if (compileStatus[0] != GLES20.GL_TRUE) {
                 Timber.e("Shader $shader compile failure: ${GLES20.glCompileShader(shader)}")
+            } else {
+                Timber.d("Shader $shader compile success")
             }
+
         }
     }
 
@@ -92,6 +95,10 @@ class ShaderProgram(
      * 生成着色器程序
      */
     private fun createProgram(vertexShaderCode: String?, fragmentShaderCode: String?) : Int {
+        Timber.d("------ vertexShaderCode --------\n")
+        Timber.d(vertexShaderCode)
+        Timber.d("------ fragmentShaderCode --------\n")
+        Timber.d(fragmentShaderCode)
         if (vertexShaderCode == null || fragmentShaderCode == null) {
             throw IllegalArgumentException("vertex code or fragment code is null")
         }
@@ -104,11 +111,12 @@ class ShaderProgram(
 
             // 检查着色器程序链接结果
             val linkStatus = IntArray(1)
-            GLES20.glGetProgramiv(ID, GLES20.GL_LINK_STATUS, linkStatus, 0)
+            GLES20.glGetProgramiv(it, GLES20.GL_LINK_STATUS, linkStatus, 0)
             if (linkStatus[0] != GLES20.GL_TRUE) {
-                Timber.e("Program $ID link failure: ${GLES20.glGetProgramInfoLog(ID)}")
-                GLES20.glDeleteProgram(ID)
-                ID = INVALID_PROGRAM_ID
+                Timber.e("Program $it link failure: ${GLES20.glGetProgramInfoLog(ID)}")
+                GLES20.glDeleteProgram(it)
+            } else {
+                Timber.d("Program $it link success")
             }
         }
     }
