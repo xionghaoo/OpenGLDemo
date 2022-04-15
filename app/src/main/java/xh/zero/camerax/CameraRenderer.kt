@@ -2,6 +2,7 @@ package xh.zero.camerax
 
 import android.content.Context
 import android.graphics.SurfaceTexture
+import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import xh.zero.utils.OpenGLUtil
@@ -9,7 +10,10 @@ import xh.zero.utils.ShaderProgram
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class CameraRenderer(private val context: Context) : GLSurfaceView.Renderer {
+class CameraRenderer(
+    private val context: Context,
+    private val onTextureCreated: ((SurfaceTexture) -> Unit)? = null
+) : GLSurfaceView.Renderer {
 
     /**
      * GLSL程序，GPU程序段
@@ -57,12 +61,27 @@ class CameraRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private lateinit var shaderProgram: ShaderProgram
     private val vertexBuffer = OpenGLUtil.createByteBuffer(vertexData)
     private val fragmentBuffer = OpenGLUtil.createByteBuffer(textureData)
+    // 着色器默认使用的纹理就是0
+    private var externalTextureID: Int = 0
 
-    private var surfaceTexture: SurfaceTexture? = null
+    private var aPos: Int = -1
+    private var aTextureCoord: Int = -1
+
+    // 相机预览或者视频解码专用的Texture，提供给OpenGL处理
+    private lateinit var surfaceTexture: SurfaceTexture
     private val matrix = FloatArray(16)
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         shaderProgram = ShaderProgram(context, vertexShaderCode = vertexShaderCode, fragmentShaderCode = fragmentShaderCode)
+
+        aPos = shaderProgram.getAttribute("aPosition")
+        aTextureCoord = shaderProgram.getAttribute("aCoord")
+
+        externalTextureID = OpenGLUtil.createExternalTexture()
+        // 创建一个接收相机预览的texture
+        surfaceTexture = SurfaceTexture(externalTextureID)
+
+        onTextureCreated?.invoke(surfaceTexture)
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -73,11 +92,26 @@ class CameraRenderer(private val context: Context) : GLSurfaceView.Renderer {
     }
 
     override fun onDrawFrame(gl: GL10?) {
+        surfaceTexture.updateTexImage()
+        surfaceTexture.getTransformMatrix(matrix)
+
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         shaderProgram.use()
 
-        surfaceTexture?.updateTexImage()
-        surfaceTexture?.getTransformMatrix(matrix)
+        // 给顶点赋值
+        GLES20.glVertexAttribPointer(aPos, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
+        GLES20.glEnableVertexAttribArray(aPos)
+        // 给纹理坐标顶点赋值
+        GLES20.glVertexAttribPointer(aTextureCoord, 2, GLES20.GL_FLOAT, false, 0, fragmentBuffer)
+        GLES20.glEnableVertexAttribArray(aTextureCoord)
+
+        // 激活外部纹理（这两步不是必须的）
+        GLES20.glActiveTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES)
+        // 绑定外部纹理到glsl，设置uniform属性必须要先使用程序，因为它是在当前激活的着色器程序中使用
+        shaderProgram.setInt("uTexture", externalTextureID)
+
+        // 以相同的方向绘制三角形
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
 
     }
 

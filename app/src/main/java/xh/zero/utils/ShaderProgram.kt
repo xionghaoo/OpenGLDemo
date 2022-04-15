@@ -66,6 +66,10 @@ class ShaderProgram(
         ID = INVALID_PROGRAM_ID
     }
 
+    fun getAttribute(name: String): Int {
+        return GLES20.glGetAttribLocation(ID, name)
+    }
+
     /**
      * 编译着色器代码
      */
