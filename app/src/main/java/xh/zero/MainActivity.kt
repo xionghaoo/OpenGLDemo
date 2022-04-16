@@ -14,6 +14,7 @@ import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
 import xh.zero.camera1.Camera1Activity
+import xh.zero.camera2.Camera2Activity
 import xh.zero.camerax.CameraXActivity
 import xh.zero.core.startPlainActivity
 import xh.zero.databinding.ActivityMainBinding
@@ -33,6 +34,10 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnCamera1.setOnClickListener {
             startPlainActivity(Camera1Activity::class.java)
+        }
+
+        binding.btnCamera2.setOnClickListener {
+            startPlainActivity(Camera2Activity::class.java)
         }
 
         // 必要权限申请

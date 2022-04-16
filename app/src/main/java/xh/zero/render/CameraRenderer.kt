@@ -104,6 +104,7 @@ class CameraRenderer(
         surfaceTexture.updateTexImage()
         surfaceTexture.getTransformMatrix(matrix)
 
+//        GLES20.glClearColor(0f, 0f, 0f, 1f)
 //        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         shaderProgram.use()
 

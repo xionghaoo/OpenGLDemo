@@ -21,15 +21,6 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/btn_camerax"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginStart="30dp"
-        android:layout_marginEnd="30dp"
-        android:text="CameraX测试" />
-
-    <Button
         android:id="@+id/btn_camera1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -37,6 +28,24 @@
         android:layout_marginStart="30dp"
         android:layout_marginEnd="30dp"
         android:text="Camera1测试" />
+
+    <Button
+        android:id="@+id/btn_camera2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="30dp"
+        android:text="Camera2测试" />
+
+    <Button
+        android:id="@+id/btn_camerax"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="30dp"
+        android:text="CameraX测试" />
 
 
 </LinearLayout>

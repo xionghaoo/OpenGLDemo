@@ -4,11 +4,12 @@ import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.FloatBuffer
 
 class OpenGLUtil {
     companion object {
         // 每个float 4byte
-        fun createByteBuffer(data: FloatArray) =
+        fun createByteBuffer(data: FloatArray): FloatBuffer =
             ByteBuffer.allocateDirect(data.size * 4).run {
                 order(ByteOrder.nativeOrder())
                 asFloatBuffer().apply {
