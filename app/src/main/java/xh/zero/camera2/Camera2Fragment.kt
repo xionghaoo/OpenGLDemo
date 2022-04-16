@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Camera
 import android.graphics.ImageFormat
+import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.hardware.camera2.params.SessionConfiguration
 import android.media.ImageReader
@@ -44,6 +45,8 @@ class Camera2Fragment : Fragment() {
         cameraManager.getCameraCharacteristics(cameraId)
     }
 
+    private lateinit var surfaceTexture: SurfaceTexture
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
@@ -69,25 +72,31 @@ class Camera2Fragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // 监听Surface的周期
-        binding.viewfinder.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) {
-                binding.viewfinder.setAspectRatio(binding.viewfinder.width, binding.viewfinder.width / 2)
-                initializeCamera()
-            }
+//        binding.viewfinder.holder.addCallback(object : SurfaceHolder.Callback {
+//            override fun surfaceCreated(holder: SurfaceHolder) {
+////                binding.viewfinder.setAspectRatio(binding.viewfinder.width, binding.viewfinder.width / 2)
+//                initializeCamera()
+//            }
+//
+//            override fun surfaceChanged(
+//                holder: SurfaceHolder,
+//                format: Int,
+//                width: Int,
+//                height: Int
+//            ) {
+//
+//            }
+//
+//            override fun surfaceDestroyed(holder: SurfaceHolder) {
+//                stopCamera()
+//            }
+//        })
 
-            override fun surfaceChanged(
-                holder: SurfaceHolder,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
-
-            }
-
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-                stopCamera()
-            }
-        })
+        binding.viewfinder.setOnTextureCreated {
+            surfaceTexture = it
+            surfaceTexture.setDefaultBufferSize(binding.viewfinder.width, binding.viewfinder.height)
+            initializeCamera()
+        }
     }
 
     private fun initializeCamera() = lifecycleScope.launch(Dispatchers.Main) {
@@ -96,10 +105,14 @@ class Camera2Fragment : Fragment() {
             CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
             .getOutputSizes(ImageFormat.JPEG).maxByOrNull { it.height * it.width }!!
         imageReader = ImageReader.newInstance(size.width, size.height, ImageFormat.JPEG, 3)
-        val targets = listOf<Surface>(binding.viewfinder.holder.surface, imageReader.surface)
+
+        binding.viewfinder.holder.setFixedSize(binding.viewfinder.width, binding.viewfinder.height)
+
+        val surface = Surface(surfaceTexture)
+        val targets = listOf<Surface>(surface, imageReader.surface)
         val session = createCaptureSession(camera, targets, cameraHandler)
         val captureRequest = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
-            addTarget(binding.viewfinder.holder.surface)
+            addTarget(surface)
         }
         session.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
     }

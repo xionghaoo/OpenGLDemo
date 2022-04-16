@@ -92,6 +92,7 @@ class CameraXFragment : Fragment() {
 
         binding.viewFinder.setOnTextureCreated { sfTexture ->
             surfaceTexture = sfTexture
+            surfaceTexture.setDefaultBufferSize(binding.viewFinder.width, binding.viewFinder.height)
             displayId = binding.viewFinder.display.displayId
             setupCamera()
         }

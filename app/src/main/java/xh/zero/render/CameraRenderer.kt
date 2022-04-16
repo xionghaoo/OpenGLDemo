@@ -89,7 +89,6 @@ class CameraRenderer(
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0)
         // 创建一个接收相机预览的texture
         surfaceTexture = SurfaceTexture(externalTextureID)
-
         onTextureCreated?.invoke(surfaceTexture)
     }
 

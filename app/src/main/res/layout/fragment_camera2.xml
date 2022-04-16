@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     tools:context=".camera2.Camera2Fragment">
 
-    <xh.zero.widgets.AutoFitSurfaceView
+    <xh.zero.render.CameraSurfaceView
         android:id="@+id/viewfinder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
