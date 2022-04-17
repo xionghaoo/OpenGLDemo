@@ -2,16 +2,14 @@ package xh.zero.camera2
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Camera
 import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
-import android.hardware.camera2.params.SessionConfiguration
 import android.media.ImageReader
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
-import android.util.Log
+import android.util.Size
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -19,7 +17,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber
-import xh.zero.R
 import xh.zero.databinding.FragmentCamera2Binding
 import java.lang.RuntimeException
 import kotlin.coroutines.resume
@@ -47,10 +44,6 @@ class Camera2Fragment : Fragment() {
 
     private lateinit var surfaceTexture: SurfaceTexture
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     override fun onStop() {
         super.onStop()
         stopCamera()
@@ -71,29 +64,12 @@ class Camera2Fragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // 监听Surface的周期
-//        binding.viewfinder.holder.addCallback(object : SurfaceHolder.Callback {
-//            override fun surfaceCreated(holder: SurfaceHolder) {
-////                binding.viewfinder.setAspectRatio(binding.viewfinder.width, binding.viewfinder.width / 2)
-//                initializeCamera()
-//            }
-//
-//            override fun surfaceChanged(
-//                holder: SurfaceHolder,
-//                format: Int,
-//                width: Int,
-//                height: Int
-//            ) {
-//
-//            }
-//
-//            override fun surfaceDestroyed(holder: SurfaceHolder) {
-//                stopCamera()
-//            }
-//        })
-
         binding.viewfinder.setOnTextureCreated {
             surfaceTexture = it
+            // 设置缓冲区大小，用来接收相机输出的图像帧缓冲，这里的设置为Fragment的尺寸
+            // 相机的图像输出会根据设置的目标Surface来生成缓冲区
+            // 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
+            // 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
             surfaceTexture.setDefaultBufferSize(binding.viewfinder.width, binding.viewfinder.height)
             initializeCamera()
         }
@@ -101,9 +77,9 @@ class Camera2Fragment : Fragment() {
 
     private fun initializeCamera() = lifecycleScope.launch(Dispatchers.Main) {
         camera = openCamera(cameraManager, cameraId, cameraHandler)
-        val size = characteristics.get(
-            CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
-            .getOutputSizes(ImageFormat.JPEG).maxByOrNull { it.height * it.width }!!
+        val size = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+            .getOutputSizes(ImageFormat.JPEG)
+            .maxByOrNull { it.height * it.width }!!
         imageReader = ImageReader.newInstance(size.width, size.height, ImageFormat.JPEG, 3)
 
         binding.viewfinder.holder.setFixedSize(binding.viewfinder.width, binding.viewfinder.height)
@@ -114,7 +90,15 @@ class Camera2Fragment : Fragment() {
         val captureRequest = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
             addTarget(surface)
         }
-        session.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
+        session.setRepeatingRequest(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
+            override fun onCaptureCompleted(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                result: TotalCaptureResult
+            ) {
+                // 一次请求的捕获完成
+            }
+        }, cameraHandler)
     }
 
     @SuppressLint("MissingPermission")
