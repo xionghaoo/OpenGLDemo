@@ -26,6 +26,11 @@ class ShaderProgram(
         private set
 
     init {
+        if ((vertexPath == null || fragmentPath == null)
+            && (vertexShaderCode == null || fragmentShaderCode == null)) {
+            throw IllegalArgumentException("Please enter file path or code string for ShaderProgram")
+        }
+
         // 加载着色器代码
         val vShaderCode = if (vertexPath != null) {
             readAssetsJson(vertexPath, context)

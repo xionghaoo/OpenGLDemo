@@ -95,10 +95,6 @@ class CameraXFragment : Fragment() {
             displayId = binding.viewFinder.display.displayId
             setupCamera()
         }
-//        binding.viewFinder.post {
-//            displayId = binding.viewFinder.display.displayId
-//            setupCamera()
-//        }
     }
 
     private fun setupCamera() {
