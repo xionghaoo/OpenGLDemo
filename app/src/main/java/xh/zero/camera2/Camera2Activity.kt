@@ -1,6 +1,7 @@
 package xh.zero.camera2
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.graphics.ImageFormat
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -52,13 +53,23 @@ class Camera2Activity : AppCompatActivity() {
                         Timber.d("屏幕尺寸：${metrics.width()} x ${metrics.height()}")
                         val lp = binding.fragmentContainer.layoutParams as FrameLayout.LayoutParams
 
-                        // 设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
-                        val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
-                        lp.width = metrics.width()
-                        // Nexus6P 竖直方向屏幕计算高度
-                        // 等比例关系：1440 / height = 3024 / 4032
-                        // height = 4032 / 3024 * 1440
-                        lp.height = (metrics.width() / ratio).toInt()
+                        if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+                            // 设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
+                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
+                            lp.width = metrics.width()
+                            // Nexus6P 竖直方向屏幕计算高度
+                            // 等比例关系：1440 / height = 3024 / 4032
+                            // height = 4032 / 3024 * 1440
+                            lp.height = (metrics.width() / ratio).toInt()
+                        } else {
+                            // 设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
+                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
+                            // Nexus6P 竖直方向屏幕计算高度
+                            // 等比例关系：width / 1440 = 4032 / 3024
+                            // width = 4032 / 3024 * 1440
+                            lp.width = (metrics.height() / ratio).toInt()
+                            lp.height = metrics.height()
+                        }
                         lp.gravity = Gravity.CENTER
 
                         replaceFragment(Camera2Fragment.newInstance(index.toString()), R.id.fragment_container)

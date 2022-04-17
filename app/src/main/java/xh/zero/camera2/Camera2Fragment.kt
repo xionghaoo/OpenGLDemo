@@ -71,6 +71,7 @@ class Camera2Fragment : Fragment() {
             // 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
             // 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
             surfaceTexture.setDefaultBufferSize(binding.viewfinder.width, binding.viewfinder.height)
+            Timber.d("纹理缓冲区尺寸：${binding.viewfinder.width} x ${binding.viewfinder.height}")
             initializeCamera()
         }
     }
