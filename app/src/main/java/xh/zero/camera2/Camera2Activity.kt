@@ -2,6 +2,7 @@ package xh.zero.camera2
 
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.graphics.ImageFormat
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -49,12 +50,13 @@ class Camera2Activity : AppCompatActivity() {
                         // Nexus6P相机支持的最大尺寸：4032x3024
                         Timber.d("相机支持的最大尺寸：${maxImageSize}")
                         val metrics = WindowManager(this).getCurrentWindowMetrics().bounds
-                        // Nexus6P屏幕尺寸：1440 x 2560
+                        // Nexus6P屏幕尺寸：1440 x 2560，包含NavigationBar的高度
                         Timber.d("屏幕尺寸：${metrics.width()} x ${metrics.height()}")
                         val lp = binding.fragmentContainer.layoutParams as FrameLayout.LayoutParams
 
-                        if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-                            // 设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
+                        Timber.d("屏幕方向: ${if (resources.configuration.orientation == 1) "竖直" else "水平"}")
+                        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                            // 竖直方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
                             val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
                             lp.width = metrics.width()
                             // Nexus6P 竖直方向屏幕计算高度
@@ -62,7 +64,7 @@ class Camera2Activity : AppCompatActivity() {
                             // height = 4032 / 3024 * 1440
                             lp.height = (metrics.width() / ratio).toInt()
                         } else {
-                            // 设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
+                            // 水平方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
                             val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
                             // Nexus6P 竖直方向屏幕计算高度
                             // 等比例关系：width / 1440 = 4032 / 3024

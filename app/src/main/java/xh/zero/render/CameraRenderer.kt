@@ -1,11 +1,14 @@
 package xh.zero.render
 
 import android.content.Context
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
+import android.util.Size
 import timber.log.Timber
 import xh.zero.utils.OpenGLUtil
 import xh.zero.utils.ShaderProgram
@@ -15,7 +18,8 @@ import javax.microedition.khronos.opengles.GL10
 typealias OnTextureCreated = (SurfaceTexture) -> Unit
 
 class CameraRenderer(
-    private val context: Context
+    private val context: Context,
+    private var listener: OnViewSizeAvailableListener
 ) : GLSurfaceView.Renderer {
 
     /**
@@ -73,14 +77,12 @@ class CameraRenderer(
 
     // 相机预览或者视频解码专用的Texture，提供给OpenGL处理
     private lateinit var surfaceTexture: SurfaceTexture
-    private val scaleMatrix = FloatArray(16)
-    private val matrix = FloatArray(16)
-    private val rotateMatrix = FloatArray(16)
-    private val aMatrix = FloatArray(16)
+    private val textureMatrix = FloatArray(16)
+    private val horizontalAdjustMatrix = FloatArray(16)
 
     private var onTextureCreated: OnTextureCreated? = null
 
-    fun setOnTextureCreated(callback: OnTextureCreated) {
+    fun setOnSurfaceCreated(callback: OnTextureCreated) {
         this.onTextureCreated = callback
     }
 
@@ -90,7 +92,7 @@ class CameraRenderer(
         aPos = shaderProgram.getAttribute("aPosition")
         aTextureCoord = shaderProgram.getAttribute("aCoord")
 
-        setScaleMatrix(scaleMatrix)
+        initialHorizontalAdjustMatrix()
 
         externalTextureID = OpenGLUtil.createExternalTexture()
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0)
@@ -109,7 +111,7 @@ class CameraRenderer(
 
     override fun onDrawFrame(gl: GL10?) {
         surfaceTexture.updateTexImage()
-        surfaceTexture.getTransformMatrix(matrix)
+        surfaceTexture.getTransformMatrix(textureMatrix)
 
 //        GLES20.glClearColor(0f, 0f, 0f, 1f)
 //        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
@@ -123,23 +125,10 @@ class CameraRenderer(
         GLES20.glEnableVertexAttribArray(aTextureCoord)
 
         // 纹理坐标矫正矩阵
-        shaderProgram.setMat4("uMatrix", matrix)
+        shaderProgram.setMat4("uMatrix", textureMatrix)
 
-        /**
-         * 如果屏幕方向是水平方向，假设拍摄的画面是4:3，那么这个4:3的画面会放入一个竖直方向的顶点坐标中。
-         * 正常如果不做矫正，水平方向看到的画面是旋转的90度的(顺时针)。原因是相机是以水平方向拍摄的画面，
-         * 在放入竖直方向的纹理坐标时发生了变形，这个变形的画面又在水平方向上的SurfaceView上预览。
-         *
-         * 这里有两个地方需要矫正，旋转和形变
-         * 1. 旋转，需要乘以反方向的矩阵(逆时针矩阵)
-         * 2. 形变，需要乘以一个缩放矩阵(放大4/3倍)，因为是把宽度方向的尺寸放入了高度方向的容器
-         */
-        // 矩阵屏幕朝里方向顺时针旋转90度，相当于画面逆时针旋转90度
-        Matrix.setRotateM(rotateMatrix, 0, 90f, 0f, 0f, 1f)
-        // 矩阵乘顺序：从右到左，缩放 -> 旋转 -> 平移
-        Matrix.multiplyMM(aMatrix, 0, rotateMatrix, 0, scaleMatrix, 0)
         // 顶点坐标矫正矩阵
-        shaderProgram.setMat4("posMatrix", aMatrix)
+        shaderProgram.setMat4("posMatrix", horizontalAdjustMatrix)
 
         // 激活外部纹理（这个步骤不是必须的，渲染的纹理默认会绑定到位置0）
 //        GLES20.glActiveTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES)
@@ -155,9 +144,35 @@ class CameraRenderer(
 
     }
 
-    private fun setScaleMatrix(r: FloatArray) {
-        Matrix.setIdentityM(r, 0)
-        Matrix.scaleM(r, 0, 1f, 1.25f, 1f)
+    /**
+     * 如果屏幕方向是水平方向，假设拍摄的画面是4:3，那么这个4:3的画面会放入一个竖直方向的顶点坐标中。
+     * 正常如果不做矫正，水平方向看到的画面是旋转的90度的(顺时针)。原因是相机是以水平方向拍摄的画面，
+     * 在放入竖直方向的纹理坐标时发生了变形，这个变形的画面又在水平方向上的SurfaceView上预览。
+     *
+     * 这里有两个地方需要矫正，旋转和形变
+     * 1. 旋转，需要乘以反方向的矩阵(逆时针矩阵)
+     * 2. 形变，需要乘以一个缩放矩阵(放大4/3倍)，因为是把宽度方向的尺寸放入了高度方向长度的容器
+     */
+    private fun initialHorizontalAdjustMatrix() {
+        if (context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            Matrix.setIdentityM(horizontalAdjustMatrix, 0)
+        } else {
+            // 缩放矩阵
+            val scale: Float = listener.getViewSize().width.toFloat() / listener.getViewSize().height
+            val scaleMatrix = FloatArray(16)
+            Matrix.setIdentityM(scaleMatrix, 0)
+            Matrix.scaleM(scaleMatrix, 0, 1f, scale, 1f)
+
+            val rotateMatrix = FloatArray(16)
+            // 矩阵屏幕朝里方向顺时针旋转90度，相当于画面逆时针旋转90度
+            Matrix.setRotateM(rotateMatrix, 0, 90f, 0f, 0f, 1f)
+            // 矩阵乘顺序：从右到左，缩放 -> 旋转 -> 平移
+            Matrix.multiplyMM(horizontalAdjustMatrix, 0, rotateMatrix, 0, scaleMatrix, 0)
+        }
+    }
+
+    interface OnViewSizeAvailableListener {
+        fun getViewSize() : Size
     }
 
 

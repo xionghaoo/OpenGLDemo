@@ -4,8 +4,6 @@ import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.Camera
 import android.hardware.Camera.CameraInfo
-import android.opengl.GLES11Ext
-import android.opengl.GLES20
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -67,7 +65,7 @@ class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFra
             }
         })
 
-        binding.surfaceView.setOnTextureCreated { surfaceTexture ->
+        binding.surfaceView.setOnSurfaceCreated { surfaceTexture ->
             openCamera(cameraId!!.toInt(), surfaceTexture)
 
             startPreview()

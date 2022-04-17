@@ -3,7 +3,6 @@ package xh.zero.camerax
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
-import android.graphics.drawable.ColorDrawable
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -90,7 +89,7 @@ class CameraXFragment : Fragment() {
 
         windowManager = WindowManager(view.context)
 
-        binding.viewFinder.setOnTextureCreated { sfTexture ->
+        binding.viewFinder.setOnSurfaceCreated { sfTexture ->
             surfaceTexture = sfTexture
             surfaceTexture.setDefaultBufferSize(binding.viewFinder.width, binding.viewFinder.height)
             displayId = binding.viewFinder.display.displayId

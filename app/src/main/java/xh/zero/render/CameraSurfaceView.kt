@@ -1,17 +1,17 @@
 package xh.zero.render
 
 import android.content.Context
-import android.graphics.SurfaceTexture
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
+import android.util.Size
 
-class CameraSurfaceView : GLSurfaceView {
+class CameraSurfaceView : GLSurfaceView, CameraRenderer.OnViewSizeAvailableListener {
 
     private val renderer: CameraRenderer
 
     init {
         setEGLContextClientVersion(2)
-        renderer = CameraRenderer(context)
+        renderer = CameraRenderer(context, this)
         setRenderer(renderer)
         renderMode = RENDERMODE_CONTINUOUSLY
     }
@@ -20,9 +20,10 @@ class CameraSurfaceView : GLSurfaceView {
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
 
+    override fun getViewSize(): Size = Size(width, height)
 
-    fun setOnTextureCreated(callback: OnTextureCreated) {
-        renderer.setOnTextureCreated(callback)
+    fun setOnSurfaceCreated(callback: OnTextureCreated) {
+        renderer.setOnSurfaceCreated(callback)
     }
 
 }

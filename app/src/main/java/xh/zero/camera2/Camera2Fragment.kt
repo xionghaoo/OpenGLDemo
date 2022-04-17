@@ -9,7 +9,6 @@ import android.media.ImageReader
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
-import android.util.Size
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -64,7 +63,7 @@ class Camera2Fragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.viewfinder.setOnTextureCreated {
+        binding.viewfinder.setOnSurfaceCreated {
             surfaceTexture = it
             // 设置缓冲区大小，用来接收相机输出的图像帧缓冲，这里的设置为Fragment的尺寸
             // 相机的图像输出会根据设置的目标Surface来生成缓冲区
@@ -74,6 +73,7 @@ class Camera2Fragment : Fragment() {
             Timber.d("纹理缓冲区尺寸：${binding.viewfinder.width} x ${binding.viewfinder.height}")
             initializeCamera()
         }
+
     }
 
     private fun initializeCamera() = lifecycleScope.launch(Dispatchers.Main) {
