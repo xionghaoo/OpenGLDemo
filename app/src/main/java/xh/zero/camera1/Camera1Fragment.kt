@@ -1,6 +1,7 @@
 package xh.zero.camera1
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.Camera
@@ -15,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import timber.log.Timber
+import xh.zero.core.checkAllMatched
 import xh.zero.databinding.FragmentCamera1Binding
 
 /**
@@ -69,6 +71,7 @@ class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFra
         })
 
         binding.viewfinder.setOnSurfaceCreated { surfaceTexture ->
+            surfaceTexture.setDefaultBufferSize(binding.viewfinder.width, binding.viewfinder.height)
             openCamera(cameraId, surfaceTexture)
             startPreview()
         }
@@ -99,17 +102,29 @@ class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFra
     private fun initialParameters(camera: Camera?) {
         parameters = camera?.parameters
         parameters?.previewFormat = ImageFormat.NV21
-        parameters?.supportedPreviewFormats
-        parameters?.supportedPictureFormats
-        parameters?.setPreviewSize(binding.viewfinder.width, binding.viewfinder.height)
-        // 设置照片尺寸
-        val cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        val characteristic = cameraManager.getCameraCharacteristics(cameraId.toString())
-        characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-            ?.getOutputSizes(ImageFormat.JPEG)
+
+        // 竖直和水平方向的宽高比是相反的，这里要分开计算
+        val orientation = requireContext().resources.configuration.orientation
+        val ratio = if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            binding.viewfinder.width.toFloat() / binding.viewfinder.height
+        } else {
+            binding.viewfinder.height.toFloat() / binding.viewfinder.width
+        }
+        Timber.d("画面比例：$ratio")
+        parameters?.supportedPreviewSizes
+            // 适合找到SurfaceView大小比例的预览尺寸
+            ?.filter { it.height.toFloat() / it.width == ratio }
+            ?.maxByOrNull { it.width * it .height }
+            ?.also { maxSize ->
+                // 设置预览尺寸，这里要求是符合SurfaceView比例的最大预览尺寸
+                parameters?.setPreviewSize(maxSize.width, maxSize.height)
+                Timber.d("最大的预览尺寸：${maxSize.width} x ${maxSize.height}")
+            }
+        parameters?.supportedPictureSizes
             ?.maxByOrNull { it.width * it.height }
-            ?.also { size ->
-                parameters?.setPictureSize(size.width, size.height)
+            ?.also { maxSize ->
+                // 设置输出的图像为最大尺寸
+                parameters?.setPictureSize(maxSize.width, maxSize.height)
             }
         camera?.parameters = parameters
     }

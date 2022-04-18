@@ -18,11 +18,11 @@
         android:theme="@style/Theme.OpenGLDemo">
         <activity
             android:name=".camera2.Camera2Activity"
-            android:exported="false"
-            android:screenOrientation="userLandscape"/>
+            android:exported="false"/>
         <activity
             android:name=".camera1.Camera1Activity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="userLandscape"/>
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -34,8 +34,7 @@
         </activity>
         <activity
             android:name=".camerax.CameraXActivity"
-            android:exported="false"
-            android:screenOrientation="userLandscape"/>
+            android:exported="false"/>
     </application>
 
 </manifest>
