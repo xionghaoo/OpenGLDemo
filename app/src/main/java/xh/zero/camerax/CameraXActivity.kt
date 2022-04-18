@@ -84,6 +84,7 @@ class CameraXActivity : AppCompatActivity() {
                                     // width = 4032 / 3024 * 1440
                                     lp.width = (metrics.height() / ratio).toInt()
                                     lp.height = metrics.height()
+                                    Timber.d("相机预览视图尺寸：${lp.width} x ${lp.height}")
                                 }
                                 lp.gravity = Gravity.CENTER
 
@@ -91,7 +92,8 @@ class CameraXActivity : AppCompatActivity() {
                                 replaceFragment(fragment, R.id.fragment_container)
                             }
 
-
+                        val cameraOrientation = characteristic.get(CameraCharacteristics.SENSOR_ORIENTATION)
+                        Timber.d("摄像头角度：$cameraOrientation")
 
 
 

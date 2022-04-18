@@ -1,9 +1,12 @@
 package xh.zero.camera1
 
+import android.content.Context
 import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.Camera
 import android.hardware.Camera.CameraInfo
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,6 +14,7 @@ import android.view.SurfaceHolder
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import timber.log.Timber
 import xh.zero.databinding.FragmentCamera1Binding
 
 /**
@@ -18,7 +22,9 @@ import xh.zero.databinding.FragmentCamera1Binding
  */
 class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFrameAvailableListener {
 
-    private var cameraId: String? = null
+    private val cameraId: Int by lazy {
+        arguments?.getInt(ARG_CAMERA_ID) ?: 0
+    }
     private lateinit var binding: FragmentCamera1Binding
 
     private var camera: Camera? = null
@@ -26,9 +32,6 @@ class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFra
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            cameraId = it.getString(ARG_CAMERA_ID)
-        }
     }
 
     override fun onDestroy() {
@@ -46,7 +49,7 @@ class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFra
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
+        binding.viewfinder.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
 
             }
@@ -65,16 +68,15 @@ class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFra
             }
         })
 
-        binding.surfaceView.setOnSurfaceCreated { surfaceTexture ->
-            openCamera(cameraId!!.toInt(), surfaceTexture)
-
+        binding.viewfinder.setOnSurfaceCreated { surfaceTexture ->
+            openCamera(cameraId, surfaceTexture)
             startPreview()
         }
     }
 
     private fun openCamera(cameraId: Int, surfaceTexture: SurfaceTexture?) {
         if (isSupport(cameraId)) {
-            Log.d(TAG, "openCamera: ${cameraId}")
+            Timber.d( "openCamera: ${cameraId}")
             try {
                 camera = Camera.open(cameraId)
                 camera?.setPreviewTexture(surfaceTexture)
@@ -99,8 +101,16 @@ class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFra
         parameters?.previewFormat = ImageFormat.NV21
         parameters?.supportedPreviewFormats
         parameters?.supportedPictureFormats
-        parameters?.setPreviewSize(1280, 720)
-        parameters?.setPictureSize(1280, 720)
+        parameters?.setPreviewSize(binding.viewfinder.width, binding.viewfinder.height)
+        // 设置照片尺寸
+        val cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val characteristic = cameraManager.getCameraCharacteristics(cameraId.toString())
+        characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+            ?.getOutputSizes(ImageFormat.JPEG)
+            ?.maxByOrNull { it.width * it.height }
+            ?.also { size ->
+                parameters?.setPictureSize(size.width, size.height)
+            }
         camera?.parameters = parameters
     }
 
@@ -137,10 +147,10 @@ class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFra
 
         private const val IMAGE_BUFFER_SIZE: Int = 3
 
-        fun newInstance(cameraId: String) =
+        fun newInstance(cameraId: Int) =
             Camera1Fragment().apply {
                 arguments = Bundle().apply {
-                    putString(ARG_CAMERA_ID, cameraId)
+                    putInt(ARG_CAMERA_ID, cameraId)
                 }
             }
     }

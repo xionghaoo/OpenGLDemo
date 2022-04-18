@@ -89,10 +89,11 @@ class CameraXFragment : Fragment() {
 
         windowManager = WindowManager(view.context)
 
-        binding.viewFinder.setOnSurfaceCreated { sfTexture ->
+        binding.viewfinder.setOnSurfaceCreated { sfTexture ->
             surfaceTexture = sfTexture
-            surfaceTexture.setDefaultBufferSize(binding.viewFinder.width, binding.viewFinder.height)
-            displayId = binding.viewFinder.display.displayId
+            surfaceTexture.setDefaultBufferSize(binding.viewfinder.width, binding.viewfinder.height)
+            Timber.d("纹理缓冲区尺寸：${binding.viewfinder.width} x ${binding.viewfinder.height}")
+            displayId = binding.viewfinder.display.displayId
             setupCamera()
         }
     }
@@ -128,10 +129,10 @@ class CameraXFragment : Fragment() {
         val metrics = windowManager.getCurrentWindowMetrics().bounds
         Timber.d("Screen metrics: ${metrics.width()} x ${metrics.height()}")
 
-        val screenAspectRatio = aspectRatio(metrics.width(), metrics.height())
+        val screenAspectRatio = aspectRatio(binding.viewfinder.width, binding.viewfinder.height)
         Timber.d("Preview aspect ratio: $screenAspectRatio")
 
-        val rotation = binding.viewFinder.display.rotation
+        val rotation = binding.viewfinder.display.rotation
 
         // CameraProvider
         val cameraProvider = cameraProvider

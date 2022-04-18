@@ -6,7 +6,7 @@
     tools:context=".camerax.CameraXFragment">
 
     <xh.zero.render.CameraSurfaceView
-        android:id="@+id/view_finder"
+        android:id="@+id/viewfinder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

@@ -92,7 +92,7 @@ class CameraRenderer(
         aPos = shaderProgram.getAttribute("aPosition")
         aTextureCoord = shaderProgram.getAttribute("aCoord")
 
-        initialHorizontalAdjustMatrix()
+        initialHorizontalAdjustMatrix(false)
 
         externalTextureID = OpenGLUtil.createExternalTexture()
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0)
@@ -145,6 +145,8 @@ class CameraRenderer(
     }
 
     /**
+     * 水平方向矫正矩阵
+     *
      * 如果屏幕方向是水平方向，假设拍摄的画面是4:3，那么这个4:3的画面会放入一个竖直方向的顶点坐标中。
      * 正常如果不做矫正，水平方向看到的画面是旋转的90度的(顺时针)。原因是相机是以水平方向拍摄的画面，
      * 在放入竖直方向的纹理坐标时发生了变形，这个变形的画面又在水平方向上的SurfaceView上预览。
@@ -153,15 +155,16 @@ class CameraRenderer(
      * 1. 旋转，需要乘以反方向的矩阵(逆时针矩阵)
      * 2. 形变，需要乘以一个缩放矩阵(放大4/3倍)，因为是把宽度方向的尺寸放入了高度方向长度的容器
      */
-    private fun initialHorizontalAdjustMatrix() {
+    private fun initialHorizontalAdjustMatrix(needScale: Boolean) {
         if (context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             Matrix.setIdentityM(horizontalAdjustMatrix, 0)
         } else {
             // 缩放矩阵
             val scale: Float = listener.getViewSize().width.toFloat() / listener.getViewSize().height
+            Timber.d("是否缩放：${needScale}，缩放比例：${scale}")
             val scaleMatrix = FloatArray(16)
             Matrix.setIdentityM(scaleMatrix, 0)
-            Matrix.scaleM(scaleMatrix, 0, 1f, scale, 1f)
+            Matrix.scaleM(scaleMatrix, 0, 1f, if (needScale) scale else 1f, 1f)
 
             val rotateMatrix = FloatArray(16)
             // 矩阵屏幕朝里方向顺时针旋转90度，相当于画面逆时针旋转90度
