@@ -173,7 +173,7 @@ class Camera2Fragment private constructor() : Fragment() {
     /**
      * 拍照
      */
-    fun takePicture(leftTop: Point, leftBottom: Point, rightTop: Point, rightBottom: Point, complete: (String) -> Unit) {
+    fun takePicture(leftTop: Point, leftBottom: Point, rightTop: Point, drawRect: Boolean = false, complete: (String) -> Unit) {
         // Disable click listener to prevent multiple requests simultaneously in flight
 //        it.isEnabled = false
 
@@ -195,42 +195,45 @@ class Camera2Fragment private constructor() : Fragment() {
                     Timber.d("EXIF metadata saved: ${output.absolutePath}")
                 }
 
-                // 给图片加上颜色
-//                val bitmap = BitmapFactory.decodeFile(output.absolutePath)
-//                    .copy(Bitmap.Config.ARGB_8888, true)
-//                val left = leftTop.x
-//                val right = rightTop.x
-//                for (x in leftTop.x..rightTop.x) {
-//
-//                    for (y in leftTop.y..(leftTop.y + 2)) {
-//                        // 上横线
-//                        val color = Color.argb(255, 255, 255, 136)
-//                        bitmap.setPixel(x, y, color)
-//                    }
-//
-//                    for (y in (leftBottom.y - 2)..leftBottom.y) {
-//                        // 下横线
-//                        val color = Color.argb(255, 255, 255, 136)
-//                        bitmap.setPixel(x, y, color)
-//                    }
-//
-//                    for (y in leftTop.y..leftBottom.y) {
-//                        if (x >= left && x <= left + 2) {
-//                            // 左竖线
-//                            val color = Color.argb(255, 255, 255, 136)
-//                            bitmap.setPixel(x, y, color)
-//                        }
-//
-//                        if (x >= right - 2 && x <= right) {
-//                            // 右竖线
-//                            val color = Color.argb(255, 255, 255, 136)
-//                            bitmap.setPixel(x, y, color)
-//                        }
-//                    }
-//                }
-//                val bos = ByteArrayOutputStream()
-//                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
-//                FileOutputStream(output).use { it.write(bos.toByteArray()) }
+                if (drawRect) {
+                    Timber.d("给图片加上指示器矩形: $leftTop, $leftBottom, $rightTop")
+                    // 给图片加上指示器矩形
+                    val bitmap = BitmapFactory.decodeFile(output.absolutePath)
+                        .copy(Bitmap.Config.ARGB_8888, true)
+                    val left = leftTop.x
+                    val right = rightTop.x
+                    for (x in leftTop.x..rightTop.x) {
+
+                        for (y in leftTop.y..(leftTop.y + 2)) {
+                            // 上横线
+                            val color = Color.argb(255, 255, 255, 136)
+                            bitmap.setPixel(x, y, color)
+                        }
+
+                        for (y in (leftBottom.y - 2)..leftBottom.y) {
+                            // 下横线
+                            val color = Color.argb(255, 255, 255, 136)
+                            bitmap.setPixel(x, y, color)
+                        }
+
+                        for (y in leftTop.y..leftBottom.y) {
+                            if (x >= left && x <= left + 2) {
+                                // 左竖线
+                                val color = Color.argb(255, 255, 255, 136)
+                                bitmap.setPixel(x, y, color)
+                            }
+
+                            if (x >= right - 2 && x <= right) {
+                                // 右竖线
+                                val color = Color.argb(255, 255, 255, 136)
+                                bitmap.setPixel(x, y, color)
+                            }
+                        }
+                    }
+                    val bos = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
+                    FileOutputStream(output).use { it.write(bos.toByteArray()) }
+                }
 
                 withContext(Dispatchers.Main) {
                     complete(output.absolutePath)

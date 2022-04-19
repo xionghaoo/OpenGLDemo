@@ -25,10 +25,12 @@
         android:theme="@style/Theme.OpenGLDemo">
         <activity
             android:name=".ImageActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="userLandscape"/>
         <activity
             android:name=".camera2.Camera2Activity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="userLandscape"/>
         <activity
             android:name=".camera1.Camera1Activity"
             android:exported="false"

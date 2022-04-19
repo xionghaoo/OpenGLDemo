@@ -1,8 +1,6 @@
 package xh.zero.camera2
 
 import android.content.Context
-import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.ImageFormat
 import android.graphics.Point
@@ -11,6 +9,7 @@ import android.hardware.camera2.CameraManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Gravity
+import android.view.View
 import android.widget.FrameLayout
 import androidx.window.WindowManager
 import timber.log.Timber
@@ -45,7 +44,7 @@ class Camera2Activity : AppCompatActivity() {
         }
 
         binding.btnCapture.setOnClickListener {
-            fragment.takePicture(leftTop, leftBottom, rightTop, rightBottom) { imgPath ->
+            fragment.takePicture(leftTop, leftBottom, rightTop, true) { imgPath ->
                 Timber.d("start image activity")
                 ImageActivity.start(this, imgPath)
             }
@@ -87,6 +86,9 @@ class Camera2Activity : AppCompatActivity() {
                             // width = 4032 / 3024 * 1440
                             lp.width = (metrics.height() / ratio).toInt()
                             lp.height = metrics.height()
+
+                            // 只在水平方向加
+                            initialIndicatorRect(lp.width, lp.height, maxImageSize.width, maxImageSize.height)
                         }
                         lp.gravity = Gravity.CENTER
                         fragment = Camera2Fragment.newInstance(index.toString())
@@ -94,5 +96,27 @@ class Camera2Activity : AppCompatActivity() {
                     }
             }
         }
+    }
+
+    private fun initialIndicatorRect(viewW: Int, viewH: Int, imageW: Int, imageH: Int) {
+        binding.vIndicatorRect.visibility = View.VISIBLE
+
+        val ratio = 0.75f
+        val indicatorW = (ratio * viewW).toInt()
+        val indicatorH = (ratio * viewH).toInt()
+
+        val lp = binding.vIndicatorRect.layoutParams as FrameLayout.LayoutParams
+        lp.width = indicatorW
+        lp.height = indicatorH
+        lp.gravity = Gravity.CENTER
+
+        val imageDrawRectW = (ratio * imageW).toInt()
+        val imageDrawRectH = (ratio * imageH).toInt()
+        leftTop.x = ((imageW - imageDrawRectW) / 2f).toInt()
+        leftTop.y = ((imageH - imageDrawRectH) / 2f).toInt()
+        leftBottom.x = leftTop.x
+        leftBottom.y = leftTop.y + imageDrawRectH
+        rightTop.x = leftTop.x + imageDrawRectW
+        rightTop.y = leftTop.y
     }
 }

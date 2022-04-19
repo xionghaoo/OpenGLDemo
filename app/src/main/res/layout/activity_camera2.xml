@@ -20,4 +20,11 @@
         android:text="拍照"
         android:layout_gravity="end|bottom"/>
 
+    <View
+        android:id="@+id/v_indicator_rect"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/shape_rect"
+        android:visibility="gone"/>
+
 </FrameLayout>
