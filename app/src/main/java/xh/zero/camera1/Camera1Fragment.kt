@@ -22,7 +22,7 @@ import xh.zero.databinding.FragmentCamera1Binding
 /**
  * Camera1 API
  */
-class Camera1Fragment : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFrameAvailableListener {
+class Camera1Fragment private constructor() : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFrameAvailableListener {
 
     private val cameraId: Int by lazy {
         arguments?.getInt(ARG_CAMERA_ID) ?: 0

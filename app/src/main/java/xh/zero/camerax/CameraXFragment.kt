@@ -45,7 +45,7 @@ typealias LumaListener = (luma: Double) -> Unit
 /**
  * CameraX测试预览画面无变形
  */
-class CameraXFragment : Fragment() {
+class CameraXFragment private constructor() : Fragment() {
 
     private lateinit var binding: FragmentCameraXBinding
 

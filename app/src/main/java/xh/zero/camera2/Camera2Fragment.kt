@@ -30,7 +30,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class Camera2Fragment : Fragment() {
+class Camera2Fragment private constructor() : Fragment() {
 
     private lateinit var binding: FragmentCamera2Binding
     private val cameraId: String by lazy {
@@ -55,12 +55,8 @@ class Camera2Fragment : Fragment() {
     private val imageReaderHandler = Handler(imageReaderThread.looper)
     private lateinit var relativeOrientation: OrientationLiveData
 
-    override fun onStop() {
-        super.onStop()
-        stopCamera()
-    }
-
     override fun onDestroy() {
+        stopCamera()
         cameraThread.quitSafely()
         super.onDestroy()
     }
@@ -200,41 +196,41 @@ class Camera2Fragment : Fragment() {
                 }
 
                 // 给图片加上颜色
-                val bitmap = BitmapFactory.decodeFile(output.absolutePath)
-                    .copy(Bitmap.Config.ARGB_8888, true)
-                val left = leftTop.x
-                val right = rightTop.x
-                for (x in leftTop.x..rightTop.x) {
-
-                    for (y in leftTop.y..(leftTop.y + 2)) {
-                        // 上横线
-                        val color = Color.argb(255, 255, 255, 136)
-                        bitmap.setPixel(x, y, color)
-                    }
-
-                    for (y in (leftBottom.y - 2)..leftBottom.y) {
-                        // 下横线
-                        val color = Color.argb(255, 255, 255, 136)
-                        bitmap.setPixel(x, y, color)
-                    }
-
-                    for (y in leftTop.y..leftBottom.y) {
-                        if (x >= left && x <= left + 2) {
-                            // 左竖线
-                            val color = Color.argb(255, 255, 255, 136)
-                            bitmap.setPixel(x, y, color)
-                        }
-
-                        if (x >= right - 2 && x <= right) {
-                            // 右竖线
-                            val color = Color.argb(255, 255, 255, 136)
-                            bitmap.setPixel(x, y, color)
-                        }
-                    }
-                }
-                val bos = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
-                FileOutputStream(output).use { it.write(bos.toByteArray()) }
+//                val bitmap = BitmapFactory.decodeFile(output.absolutePath)
+//                    .copy(Bitmap.Config.ARGB_8888, true)
+//                val left = leftTop.x
+//                val right = rightTop.x
+//                for (x in leftTop.x..rightTop.x) {
+//
+//                    for (y in leftTop.y..(leftTop.y + 2)) {
+//                        // 上横线
+//                        val color = Color.argb(255, 255, 255, 136)
+//                        bitmap.setPixel(x, y, color)
+//                    }
+//
+//                    for (y in (leftBottom.y - 2)..leftBottom.y) {
+//                        // 下横线
+//                        val color = Color.argb(255, 255, 255, 136)
+//                        bitmap.setPixel(x, y, color)
+//                    }
+//
+//                    for (y in leftTop.y..leftBottom.y) {
+//                        if (x >= left && x <= left + 2) {
+//                            // 左竖线
+//                            val color = Color.argb(255, 255, 255, 136)
+//                            bitmap.setPixel(x, y, color)
+//                        }
+//
+//                        if (x >= right - 2 && x <= right) {
+//                            // 右竖线
+//                            val color = Color.argb(255, 255, 255, 136)
+//                            bitmap.setPixel(x, y, color)
+//                        }
+//                    }
+//                }
+//                val bos = ByteArrayOutputStream()
+//                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
+//                FileOutputStream(output).use { it.write(bos.toByteArray()) }
 
                 withContext(Dispatchers.Main) {
                     complete(output.absolutePath)
@@ -325,7 +321,8 @@ class Camera2Fragment : Fragment() {
             override fun onCaptureCompleted(
                 session: CameraCaptureSession,
                 request: CaptureRequest,
-                result: TotalCaptureResult) {
+                result: TotalCaptureResult
+            ) {
                 super.onCaptureCompleted(session, request, result)
                 val resultTimestamp = result.get(CaptureResult.SENSOR_TIMESTAMP)
                 Log.d(TAG, "Capture result received: $resultTimestamp")

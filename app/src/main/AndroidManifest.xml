@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="xh.zero"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="xh.zero">
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -24,12 +24,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OpenGLDemo">
         <activity
+            android:name=".ImageActivity"
+            android:exported="false" />
+        <activity
             android:name=".camera2.Camera2Activity"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".camera1.Camera1Activity"
             android:exported="false"
-            android:screenOrientation="userLandscape"/>
+            android:screenOrientation="userLandscape" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -41,7 +44,7 @@
         </activity>
         <activity
             android:name=".camerax.CameraXActivity"
-            android:exported="false"/>
+            android:exported="false" />
     </application>
 
 </manifest>

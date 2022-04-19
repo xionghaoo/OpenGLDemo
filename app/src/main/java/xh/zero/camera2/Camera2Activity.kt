@@ -14,6 +14,7 @@ import android.view.Gravity
 import android.widget.FrameLayout
 import androidx.window.WindowManager
 import timber.log.Timber
+import xh.zero.ImageActivity
 import xh.zero.R
 import xh.zero.core.replaceFragment
 import xh.zero.core.utils.SystemUtil
@@ -44,8 +45,9 @@ class Camera2Activity : AppCompatActivity() {
         }
 
         binding.btnCapture.setOnClickListener {
-            fragment.takePicture(leftTop, leftBottom, rightTop, rightBottom) {
-
+            fragment.takePicture(leftTop, leftBottom, rightTop, rightBottom) { imgPath ->
+                Timber.d("start image activity")
+                ImageActivity.start(this, imgPath)
             }
         }
 
