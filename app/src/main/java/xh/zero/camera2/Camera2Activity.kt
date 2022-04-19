@@ -45,7 +45,6 @@ class Camera2Activity : AppCompatActivity() {
 
         binding.btnCapture.setOnClickListener {
             fragment.takePicture(leftTop, leftBottom, rightTop, true) { imgPath ->
-                Timber.d("start image activity")
                 ImageActivity.start(this, imgPath)
             }
         }
@@ -94,10 +93,17 @@ class Camera2Activity : AppCompatActivity() {
                         fragment = Camera2Fragment.newInstance(index.toString())
                         replaceFragment(fragment, R.id.fragment_container)
                     }
+
+                characteristic.get(CameraCharacteristics.SENSOR_ORIENTATION)?.let { orientation ->
+                    Timber.d("摄像头方向：${orientation}")
+                }
             }
         }
     }
 
+    /**
+     * 给预览和成像加上指示器矩形
+     */
     private fun initialIndicatorRect(viewW: Int, viewH: Int, imageW: Int, imageH: Int) {
         binding.vIndicatorRect.visibility = View.VISIBLE
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.SurfaceTexture
+import android.hardware.camera2.CameraManager
 import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
@@ -92,7 +93,8 @@ class CameraRenderer(
         aPos = shaderProgram.getAttribute("aPosition")
         aTextureCoord = shaderProgram.getAttribute("aCoord")
 
-        initialHorizontalAdjustMatrix(false)
+        // 根据摄像头本身的角度不同，这个旋转可能不需要
+        initialHorizontalAdjustMatrix(needScale = false, ignore = true)
 
         externalTextureID = OpenGLUtil.createExternalTexture()
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0)
@@ -145,24 +147,35 @@ class CameraRenderer(
     }
 
     /**
-     * 水平方向矫正矩阵
+     * 摄像头预览方向矫正矩阵 - 仅限横屏情况
+     * 作用：将预览画面逆时针旋转90度
+     * 横屏状态下：
+     * 1. 如果摄像头传感器的角度为0，则不需要这个矫正矩阵
+     * 2. 如果摄像头传感器的角度为90度，则需要加上这个矫正矩阵
      *
      * 如果屏幕方向是水平方向，假设拍摄的画面是4:3，那么这个4:3的画面会放入一个竖直方向的顶点坐标中。
      * 正常如果不做矫正，水平方向看到的画面是旋转的90度的(顺时针)。原因是相机是以水平方向拍摄的画面，
      * 在放入竖直方向的纹理坐标时发生了变形，这个变形的画面又在水平方向上的SurfaceView上预览。
      *
      * 这里有两个地方需要矫正，旋转和形变
-     * 1. 旋转，需要乘以反方向的矩阵(逆时针矩阵)
-     * 2. 形变，需要乘以一个缩放矩阵(放大4/3倍)，因为是把宽度方向的尺寸放入了高度方向长度的容器
+     * 1. 旋转矫正，需要乘以反方向的矩阵(逆时针矩阵)
+     * 2. 形变矫正，需要乘以一个缩放矩阵(放大4/3倍)，因为是把宽度方向的尺寸放入了高度方向长度的容器
+     *
+     * 实际测试Nexus6p需要加上形变矫正矩阵，小米Pad则不需要加上形变矩阵，原因未知，因此这里的
+     * 形变矩阵不是必须的
+     *
+     * needScale: 是否需要缩放矩阵
+     * ignore: 是否忽略矫正行为
      */
-    private fun initialHorizontalAdjustMatrix(needScale: Boolean) {
-        if (context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+    private fun initialHorizontalAdjustMatrix(needScale: Boolean, ignore: Boolean) {
+        if (context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT || ignore) {
             Matrix.setIdentityM(horizontalAdjustMatrix, 0)
         } else {
             // 缩放矩阵
             val scale: Float = listener.getViewSize().width.toFloat() / listener.getViewSize().height
             Timber.d("是否缩放：${needScale}，缩放比例：${scale}")
             val scaleMatrix = FloatArray(16)
+            // 生成单位矩阵
             Matrix.setIdentityM(scaleMatrix, 0)
             Matrix.scaleM(scaleMatrix, 0, 1f, if (needScale) scale else 1f, 1f)
 
