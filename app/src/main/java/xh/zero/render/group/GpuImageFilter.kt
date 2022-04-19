@@ -1,9 +1,9 @@
-package xh.zero
+package xh.zero.render.group
 
 import android.content.Context
 import xh.zero.utils.ShaderProgram
 
-abstract class BaseImageFilter(
+abstract class GpuImageFilter(
     private val context: Context,
     private val vertexPath: String,
     private val fragmentPath: String
