@@ -49,6 +49,7 @@ dependencies {
     implementation dpes.easy_permission
     implementation dpes.timber
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.exifinterface:exifinterface:1.3.2'
 
     // CameraX core library
     def camerax_version = '1.1.0-beta03'

@@ -1,9 +1,11 @@
 package xh.zero.camera2
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.ImageFormat
+import android.graphics.Point
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +23,12 @@ class Camera2Activity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCamera2Binding
     private var isInit = true
+    private lateinit var fragment: Camera2Fragment
+
+    private val leftTop = Point(0, 0)
+    private val leftBottom = Point(0, 0)
+    private val rightTop = Point(0, 0)
+    private val rightBottom = Point(0, 0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +40,12 @@ class Camera2Activity : AppCompatActivity() {
             if (isInit) {
                 isInit = false
                 initialCameraView()
+            }
+        }
+
+        binding.btnCapture.setOnClickListener {
+            fragment.takePicture(leftTop, leftBottom, rightTop, rightBottom) {
+
             }
         }
 
@@ -73,8 +87,8 @@ class Camera2Activity : AppCompatActivity() {
                             lp.height = metrics.height()
                         }
                         lp.gravity = Gravity.CENTER
-
-                        replaceFragment(Camera2Fragment.newInstance(index.toString()), R.id.fragment_container)
+                        fragment = Camera2Fragment.newInstance(index.toString())
+                        replaceFragment(fragment, R.id.fragment_container)
                     }
             }
         }

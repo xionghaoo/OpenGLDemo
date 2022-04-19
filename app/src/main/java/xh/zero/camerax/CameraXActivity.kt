@@ -34,10 +34,10 @@ class CameraXActivity : AppCompatActivity() {
     private lateinit var fragment: CameraXFragment
     private var isInit = true
 
-    private val leftTop = Point()
-    private val leftBottom = Point()
-    private val rightTop = Point()
-    private val rightBottom = Point()
+    private val leftTop = Point(0, 0)
+    private val leftBottom = Point(0, 0)
+    private val rightTop = Point(0, 0)
+    private val rightBottom = Point(0, 0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,7 +88,7 @@ class CameraXActivity : AppCompatActivity() {
                                 }
                                 lp.gravity = Gravity.CENTER
 
-                                fragment =  CameraXFragment.newInstance()
+                                fragment =  CameraXFragment.newInstance(index.toString())
                                 replaceFragment(fragment, R.id.fragment_container)
                             }
 

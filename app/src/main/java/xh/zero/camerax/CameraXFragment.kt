@@ -1,5 +1,6 @@
 package xh.zero.camerax
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
@@ -15,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.widget.Toast
+import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.core.*
 import androidx.camera.core.Camera
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -46,6 +48,11 @@ typealias LumaListener = (luma: Double) -> Unit
 class CameraXFragment : Fragment() {
 
     private lateinit var binding: FragmentCameraXBinding
+
+    private val cameraId: String by lazy {
+        arguments?.getString("cameraId") ?: "0"
+    }
+
     private var displayId: Int = -1
     private var cameraProvider: ProcessCameraProvider? = null
     private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
@@ -124,6 +131,7 @@ class CameraXFragment : Fragment() {
     /**
      * 构建相机用例
      */
+    @SuppressLint("UnsafeOptInUsageError")
     private fun bindCameraUseCases() {
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = windowManager.getCurrentWindowMetrics().bounds
@@ -139,7 +147,16 @@ class CameraXFragment : Fragment() {
             ?: throw IllegalStateException("Camera initialization failed.")
 
         // CameraSelector
-        val cameraSelector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
+        val cameraSelector = CameraSelector.Builder()
+            // 开启前后置摄像头
+//            .requireLensFacing(lensFacing)
+            // 开启特定Id的摄像头
+            .addCameraFilter { cameraList ->
+                cameraList.filter { cameraInfo ->
+                    Camera2CameraInfo.from(cameraInfo).cameraId == cameraId
+                }
+            }
+            .build()
 
         // Preview 用例
         preview = Preview.Builder()
@@ -530,6 +547,10 @@ class CameraXFragment : Fragment() {
                 mediaDir else appContext.filesDir
         }
 
-        fun newInstance() = CameraXFragment()
+        fun newInstance(id: String) = CameraXFragment().apply {
+            arguments = Bundle().apply {
+                putString("cameraId", id)
+            }
+        }
     }
 }
