@@ -1,5 +1,6 @@
 package xh.zero.render.group
 
+import android.content.Context
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import timber.log.Timber
@@ -7,23 +8,26 @@ import xh.zero.utils.OpenGLUtil
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class ImageFilterGroup(): GLSurfaceView.Renderer {
+class ImageFilterGroup(private val context: Context): GLSurfaceView.Renderer {
 
     private val filters = ArrayList<GpuImageFilter>()
-    private var fboTextureId: Int = 0
-    private var fboId: Int = 0
+//    private var fboTextureId: Int = 0
+//    private var fboId: Int = 0
+    private lateinit var frameBuffer: FrameBuffer
 
     fun addFilter(filter: GpuImageFilter) {
         filters.add(filter)
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        val pair = OpenGLUtil.createFBO(0, 0)
-        fboId = pair.first
-        fboTextureId = pair.second
+//        val pair = OpenGLUtil.createFBO(0, 0)
+//        fboId = pair.first
+//        fboTextureId = pair.second
+        val display = context.resources.displayMetrics
+        frameBuffer = FrameBuffer(display.widthPixels, display.heightPixels)
 
         filters.forEach { filter ->
-            filter.onCreated()
+            filter.onSurfaceCreated()
         }
 
     }
@@ -37,24 +41,35 @@ class ImageFilterGroup(): GLSurfaceView.Renderer {
     }
 
     override fun onDrawFrame(gl: GL10?) {
-        var textureId = fboTextureId
+        var previousTextureId = frameBuffer.textureId
+        val end = filters.size - 1
         for (i in filters.indices) {
             val filter = filters[i]
+            val isNotLast = i < end
             // 开始绑定
-            if (i == 0) {
+            if (isNotLast) {
                 // 设置本次纹理绘制的位置，这里是FrameBuffer
-                GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fboId)
-            } else {
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
+                GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, frameBuffer.id)
             }
 
-            filter.onDraw(textureId)
+            if (i == 0) {
+                // 相机输入
+                filter.onDraw(previousTextureId)
+            } else if (isNotLast) {
+                // 中间绘制
+                filter.onDraw(previousTextureId)
+            } else {
+                // 输出绘制
+                filter.onDraw(previousTextureId)
+            }
+
 
             // 结束绑定
-            if (i == 0) {
+            if (isNotLast) {
                 GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+                previousTextureId = frameBuffer.textureId
             } else {
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+                GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
             }
         }
     }

@@ -51,29 +51,6 @@ class CameraInputFilter(
                     "}\n"
     }
 
-
-
-    private val vertexData = floatArrayOf(
-        -1f, -1f, // bottomLeft
-        1f, -1f, // bottomRight
-        -1f, 1f, // topLeft
-        1f, 1f // topRight
-    )
-
-    private val textureData = floatArrayOf(
-        0f, 0f, // bottomLeft
-        1f, 0f, // bottomRight
-        0f, 1f, // topLeft
-        1f, 1f // topRight
-    )
-
-    private val vertexBuffer = OpenGLUtil.createByteBuffer(vertexData)
-    private val textureBuffer = OpenGLUtil.createByteBuffer(textureData)
-
-    private var aPos: Int = -1
-    private var aTextureCoord: Int = -1
-
-//    private lateinit var shaderProgram: ShaderProgram
     // 相机预览或者视频解码专用的Texture，提供给OpenGL处理
     private lateinit var surfaceTexture: SurfaceTexture
     private val textureMatrix = FloatArray(16)
@@ -86,42 +63,29 @@ class CameraInputFilter(
         this.onTextureCreated = callback
     }
 
-    override fun onCreated() {
-        aPos = program.getAttribute("aPosition")
-        aTextureCoord = program.getAttribute("aCoord")
-
+    override fun onCreate() {
         externalTextureID = OpenGLUtil.createExternalTexture()
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0)
         // 创建一个接收相机预览的texture
         surfaceTexture = SurfaceTexture(externalTextureID)
         onTextureCreated?.invoke(surfaceTexture)
+
+        initialHorizontalAdjustMatrix(needScale = false, ignore = true)
     }
 
     override fun onDraw(fboTextureId: Int) {
         surfaceTexture.updateTexImage()
         surfaceTexture.getTransformMatrix(textureMatrix)
-
-        // 给顶点赋值
-        GLES20.glVertexAttribPointer(aPos, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
-        GLES20.glEnableVertexAttribArray(aPos)
-        // 给纹理坐标顶点赋值
-        GLES20.glVertexAttribPointer(aTextureCoord, 2, GLES20.GL_FLOAT, false, 0, textureBuffer)
-        GLES20.glEnableVertexAttribArray(aTextureCoord)
-
-        // 纹理坐标矫正矩阵
-        program.setMat4("uMatrix", textureMatrix)
-
-        // 顶点坐标矫正矩阵
-        program.setMat4("posMatrix", horizontalAdjustMatrix)
-
-        // 以相同的方向绘制三角形
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
-
-        GLES20.glDisableVertexAttribArray(aPos)
-        GLES20.glDisableVertexAttribArray(aTextureCoord)
+        super.onDraw(fboTextureId)
     }
 
+    override fun beforeDrawArrays(textureId: Int) {
+        // 纹理坐标矫正矩阵
+        program.setMat4("uMatrix", textureMatrix)
+        // 顶点坐标矫正矩阵
+        program.setMat4("posMatrix", horizontalAdjustMatrix)
+    }
 
+    override fun getTextureTarget(): Int = GLES11Ext.GL_TEXTURE_EXTERNAL_OES
 
     override fun destroy() {
 
