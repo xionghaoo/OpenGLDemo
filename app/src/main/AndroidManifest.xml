@@ -33,8 +33,7 @@
             android:screenOrientation="userLandscape"/>
         <activity
             android:name=".camera1.Camera1Activity"
-            android:exported="false"
-            android:screenOrientation="userLandscape" />
+            android:exported="false"/>
         <activity
             android:name=".MainActivity"
             android:exported="true">

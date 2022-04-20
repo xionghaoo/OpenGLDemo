@@ -26,6 +26,11 @@ class Camera1Activity : AppCompatActivity() {
         binding = ActivityCamera1Binding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        replaceFragment(Camera1Fragment.newInstance(0), R.id.fragment_container)
+//        initialScaleCameraPreview()
+    }
+
+    private fun initialScaleCameraPreview() {
         val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
         cameraManager.cameraIdList.forEachIndexed { index, cameraId ->
             val characteristic = cameraManager.getCameraCharacteristics(cameraId)
@@ -64,11 +69,6 @@ class Camera1Activity : AppCompatActivity() {
                         replaceFragment(Camera1Fragment.newInstance(index), R.id.fragment_container)
 
                     }
-//                val sizeList = configurationMap?.getOutputSizes(ImageFormat.JPEG)
-//                // 相机支持的尺寸
-//                sizeList?.forEach { size ->
-//                    Timber.d("camera support: [${size.width}, ${size.height}]")
-//                }
             }
         }
     }

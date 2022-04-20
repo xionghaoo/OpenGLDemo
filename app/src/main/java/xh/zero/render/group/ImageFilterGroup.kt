@@ -11,8 +11,6 @@ import javax.microedition.khronos.opengles.GL10
 class ImageFilterGroup(private val context: Context): GLSurfaceView.Renderer {
 
     private val filters = ArrayList<GpuImageFilter>()
-//    private var fboTextureId: Int = 0
-//    private var fboId: Int = 0
     private lateinit var frameBuffer: FrameBuffer
 
     fun addFilter(filter: GpuImageFilter) {
@@ -20,12 +18,9 @@ class ImageFilterGroup(private val context: Context): GLSurfaceView.Renderer {
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-//        val pair = OpenGLUtil.createFBO(0, 0)
-//        fboId = pair.first
-//        fboTextureId = pair.second
+
         val display = context.resources.displayMetrics
         frameBuffer = FrameBuffer(display.widthPixels, display.heightPixels)
-
         filters.forEach { filter ->
             filter.onSurfaceCreated()
         }
@@ -72,7 +67,7 @@ class ImageFilterGroup(private val context: Context): GLSurfaceView.Renderer {
                 GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
                 previousTextureId = frameBuffer.textureId
             } else {
-                GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+//                GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
             }
         }
     }

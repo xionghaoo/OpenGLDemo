@@ -83,6 +83,7 @@ class Camera1Fragment private constructor() : Fragment(), Camera.PreviewCallback
             try {
                 camera = Camera.open(cameraId)
                 camera?.setPreviewTexture(surfaceTexture)
+                camera?.setDisplayOrientation(90)
                 initialParameters(camera)
                 camera?.setPreviewCallback(this)
             } catch (e: Exception) {

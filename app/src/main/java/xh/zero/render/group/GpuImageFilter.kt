@@ -8,7 +8,7 @@ import java.nio.FloatBuffer
 
 abstract class GpuImageFilter {
 
-    protected val program: ShaderProgram
+    protected lateinit var program: ShaderProgram
 
     private var aPos: Int = -1
     private var aTexPos: Int = -1
@@ -29,16 +29,25 @@ abstract class GpuImageFilter {
 
     private lateinit var vertexBuffer: FloatBuffer
     private lateinit var textureBuffer: FloatBuffer
+    private val vertexShaderCode: String
+    private val fragmentShaderCode: String
+    private val context: Context
 
     constructor(context: Context): super() {
-        program = ShaderProgram(context, vertexShaderCode = vertexShaderCode, fragmentShaderCode = fragmentShaderCode)
+        this.context = context
+        vertexShaderCode = VERTEX_SHADER_CODE
+        fragmentShaderCode = FRAGMENT_SHADER_CODE
     }
 
     constructor(context: Context, vShaderCode: String, fShaderCode: String): super() {
-        program = ShaderProgram(context, vertexShaderCode = vShaderCode, fragmentShaderCode = fShaderCode)
+        this.context = context
+        vertexShaderCode = vShaderCode
+        fragmentShaderCode = fShaderCode
     }
 
     fun onSurfaceCreated() {
+        program = ShaderProgram(context, vertexShaderCode = vertexShaderCode, fragmentShaderCode = fragmentShaderCode)
+
         vertexBuffer = OpenGLUtil.createByteBuffer(getVertexPosition() ?: vertexData)
         textureBuffer = OpenGLUtil.createByteBuffer(getTexturePosition() ?: textureData)
         aPos = program.getAttribute("aPos")
@@ -63,10 +72,11 @@ abstract class GpuImageFilter {
         GLES20.glVertexAttribPointer(aTexPos, 2, GLES20.GL_FLOAT, false, 0, textureBuffer)
         GLES20.glEnableVertexAttribArray(aTexPos)
 
-//        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-//        // 把FrameBuffer渲染到屏幕上
-//        GLES20.glBindTexture(getTextureTarget(), fboTextureId)
-//        program.setInt("uTexture", 0)
+        // 渲染默认位置(位置0)的纹理
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+        // 把FrameBuffer渲染到屏幕上
+        GLES20.glBindTexture(getTextureTarget(), fboTextureId)
+        program.setInt("uTexture", 0)
 
         beforeDrawArrays(fboTextureId)
 
@@ -91,25 +101,25 @@ abstract class GpuImageFilter {
          * GLSL程序，GPU程序段
          * 顶点着色器
          */
-        private const val vertexShaderCode =
+        private const val VERTEX_SHADER_CODE =
             "attribute vec4 aPos;\n" +
-                    "attribute vec2 aTexPos;\n" +
-                    "varying vec2 vTexPos;\n" +
-                    "void main() {\n" +
-                    "   gl_Position = aPosition;\n" +
-                    "   vTexPos = aTexPos;" +
-                    "}\n"
+            "attribute vec2 aTexPos;\n" +
+            "varying vec2 vTexPos;\n" +
+            "void main() {\n" +
+            "   gl_Position = aPos;\n" +
+            "   vTexPos = aTexPos;" +
+            "}\n"
 
         /**
          * GLSL程序，GPU程序段
          * 片段着色器
          */
-        private const val fragmentShaderCode =
+        private const val FRAGMENT_SHADER_CODE =
             "precision mediump float;\n" +
-                    "varying vec2 vTexPos;\n" +
-                    "uniform sampler2D uTexture;\n" +
-                    "void main() {\n" +
-                    "   gl_FragColor = texture2D(uTexture, vTexPos);\n" +
-                    "}\n"
+            "varying vec2 vTexPos;\n" +
+            "uniform sampler2D uTexture;\n" +
+            "void main() {\n" +
+            "   gl_FragColor = texture2D(uTexture, vTexPos);\n" +
+            "}\n"
     }
 }

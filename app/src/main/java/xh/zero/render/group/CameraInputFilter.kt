@@ -25,15 +25,15 @@ class CameraInputFilter(
          * 顶点着色器
          */
         private const val vertexShaderCode =
-            "attribute vec4 aPosition;\n" +
-                    "attribute vec2 aCoord;\n" +
-                    "varying vec2 vCoord;\n" +
-                    "uniform mat4 uMatrix;\n" +
-                    "uniform mat4 posMatrix;\n" +
-                    "void main() {\n" +
-                    "   gl_Position = posMatrix * aPosition;\n" +
-                    "   vCoord = (uMatrix * vec4(aCoord, 1.0, 1.0)).xy;" +
-                    "}\n"
+            "attribute vec4 aPos;\n" +
+            "attribute vec2 aTexPos;\n" +
+            "varying vec2 vTexPos;\n" +
+            "uniform mat4 uMatrix;\n" +
+            "uniform mat4 posMatrix;\n" +
+            "void main() {\n" +
+            "   gl_Position = posMatrix * aPos;\n" +
+            "   vTexPos = (uMatrix * vec4(aTexPos, 1.0, 1.0)).xy;" +
+            "}\n"
 
         /**
          * GLSL程序，GPU程序段
@@ -41,13 +41,13 @@ class CameraInputFilter(
          */
         private const val fragmentShaderCode =
             "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;\n" +
-                    "varying vec2 vCoord;\n" +
-                    // 采样器，相机的输入数据先传递给此采样器
-                    "uniform samplerExternalOES uTexture;\n" +
-                    "void main() {\n" +
-                    "   gl_FragColor = texture2D(uTexture, vCoord);\n" +
-                    "}\n"
+            "precision mediump float;\n" +
+            "varying vec2 vTexPos;\n" +
+            // 采样器，相机的输入数据先传递给此采样器
+            "uniform samplerExternalOES uTexture;\n" +
+            "void main() {\n" +
+            "   gl_FragColor = texture2D(uTexture, vTexPos);\n" +
+            "}\n"
     }
 
     // 相机预览或者视频解码专用的Texture，提供给OpenGL处理
@@ -78,13 +78,7 @@ class CameraInputFilter(
     }
 
     override fun beforeDrawArrays(textureId: Int) {
-        Timber.d("CameraInputFilter: beforeDrawArrays")
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-        // 把FrameBuffer渲染到屏幕上
-        GLES20.glBindTexture(getTextureTarget(), textureId)
-        program.setInt("uTexture", 0)
-
+//        Timber.d("CameraInputFilter: beforeDrawArrays")
         // 纹理坐标矫正矩阵
         program.setMat4("uMatrix", textureMatrix)
         // 顶点坐标矫正矩阵

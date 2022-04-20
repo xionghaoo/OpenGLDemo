@@ -50,7 +50,6 @@ class CameraRenderer(
         "uniform samplerExternalOES uTexture;\n" +
         "void main() {\n" +
         "   gl_FragColor = texture2D(uTexture, vCoord);\n" +
-        "   vec4 rgba = texture2D(uTexture, vCoord);\n" +
         "}\n"
 
     private val vertexData = floatArrayOf(
@@ -97,7 +96,6 @@ class CameraRenderer(
         initialHorizontalAdjustMatrix(needScale = false, ignore = true)
 
         externalTextureID = OpenGLUtil.createExternalTexture()
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0)
         // 创建一个接收相机预览的texture
         surfaceTexture = SurfaceTexture(externalTextureID)
         onTextureCreated?.invoke(surfaceTexture)
