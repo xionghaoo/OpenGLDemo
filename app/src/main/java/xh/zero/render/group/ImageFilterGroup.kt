@@ -38,6 +38,9 @@ class ImageFilterGroup(private val context: Context): GLSurfaceView.Renderer {
         // 在对观察者坐标进行裁剪以后，再进行正视投影或者透视投影得到OpenGL标准化坐标
         // ，再把OpenGL的标准化坐标转变为屏幕坐标，和屏幕上的像素点一一对应
         GLES20.glViewport(0, 0, width, height)
+        filters.forEach { filter ->
+            filter.onSurfaceChanged(width, height)
+        }
     }
 
     override fun onDrawFrame(gl: GL10?) {

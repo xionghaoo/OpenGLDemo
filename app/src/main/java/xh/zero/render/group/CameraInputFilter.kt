@@ -16,7 +16,7 @@ typealias OnTextureCreated = (SurfaceTexture) -> Unit
 
 class CameraInputFilter(
     private val context: Context,
-    private var listener: CameraRenderer.OnViewSizeAvailableListener
+    private var listener: OnViewSizeAvailableListener
 ) : GpuImageFilter(context, vertexShaderCode, fragmentShaderCode) {
 
     companion object {
@@ -47,7 +47,6 @@ class CameraInputFilter(
                     "uniform samplerExternalOES uTexture;\n" +
                     "void main() {\n" +
                     "   gl_FragColor = texture2D(uTexture, vCoord);\n" +
-                    "   vec4 rgba = texture2D(uTexture, vCoord);\n" +
                     "}\n"
     }
 
@@ -79,6 +78,13 @@ class CameraInputFilter(
     }
 
     override fun beforeDrawArrays(textureId: Int) {
+        Timber.d("CameraInputFilter: beforeDrawArrays")
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+        // 把FrameBuffer渲染到屏幕上
+        GLES20.glBindTexture(getTextureTarget(), textureId)
+        program.setInt("uTexture", 0)
+
         // 纹理坐标矫正矩阵
         program.setMat4("uMatrix", textureMatrix)
         // 顶点坐标矫正矩阵

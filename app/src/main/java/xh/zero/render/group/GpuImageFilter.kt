@@ -48,6 +48,10 @@ abstract class GpuImageFilter {
 
     abstract fun onCreate()
 
+    open fun onSurfaceChanged(width: Int, height: Int) {
+
+    }
+
     open fun getTextureTarget() : Int = GLES20.GL_TEXTURE_2D
 
     open fun onDraw(fboTextureId: Int) {
@@ -59,11 +63,10 @@ abstract class GpuImageFilter {
         GLES20.glVertexAttribPointer(aTexPos, 2, GLES20.GL_FLOAT, false, 0, textureBuffer)
         GLES20.glEnableVertexAttribArray(aTexPos)
 
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-        // 把FrameBuffer渲染到屏幕上
-        GLES20.glBindTexture(getTextureTarget(), fboTextureId)
-
-        program.setInt("uTexture", 0)
+//        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+//        // 把FrameBuffer渲染到屏幕上
+//        GLES20.glBindTexture(getTextureTarget(), fboTextureId)
+//        program.setInt("uTexture", 0)
 
         beforeDrawArrays(fboTextureId)
 

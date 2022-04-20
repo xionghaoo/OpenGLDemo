@@ -47,9 +47,7 @@ class FrameBuffer(
         )
 
         //6. 检测是否绑定从成功
-        if (GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER)
-            != GLES20.GL_FRAMEBUFFER_COMPLETE
-        ) {
+        if (GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER) != GLES20.GL_FRAMEBUFFER_COMPLETE) {
 //                Log.e(TAG, "glFramebufferTexture2D error")
         }
         //7. 解绑纹理和FBO
