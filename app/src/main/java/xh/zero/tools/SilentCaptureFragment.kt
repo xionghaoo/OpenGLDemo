@@ -5,9 +5,13 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import xh.zero.view.Camera2Fragment
 import xh.zero.databinding.FragmentSilentCaptureBinding
+import xh.zero.view.Camera2SilentFragment
 import xh.zero.widgets.BaseSurfaceView
 
-class SilentCaptureFragment : Camera2Fragment<FragmentSilentCaptureBinding>() {
+/**
+ * 无预览拍照
+ */
+class SilentCaptureFragment : Camera2SilentFragment<FragmentSilentCaptureBinding>() {
 
     override val cameraId: String by lazy {
         arguments?.getString("cameraId") ?: "0"
@@ -19,8 +23,6 @@ class SilentCaptureFragment : Camera2Fragment<FragmentSilentCaptureBinding>() {
     ): FragmentSilentCaptureBinding {
         return FragmentSilentCaptureBinding.inflate(inflater, container, false)
     }
-
-    override fun getSurfaceView(): BaseSurfaceView = binding.viewfinder
 
     companion object {
         fun newInstance(cameraId: String) =

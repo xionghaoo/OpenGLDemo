@@ -11,18 +11,24 @@ class CustomImageFilter(private val context: Context) : GpuImageFilter(context, 
 
     private var imgWidth: Int = 0
     private var imgHeight: Int = 0
-    private var matrix = FloatArray(16)
+    private var scaleMatrix = FloatArray(16)
     private var imgTexture = 0
+
+//    private val vPMatrix = FloatArray(16)
 
     override fun onCreate() {
         val bitmap = BitmapFactory.decodeStream(context.assets.open("test_img.jpeg"))
         imgWidth = bitmap.width
         imgHeight = bitmap.height
-        imgTexture = createImageTexture(bitmap)
+        val matrix = android.graphics.Matrix()
+        matrix.postScale(1f, -1f)
+        imgTexture = createImageTexture(Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true))
     }
 
     override fun beforeDrawArrays(textureId: Int) {
-        program.setMat4("uMatrix", matrix)
+
+
+        program.setMat4("scaleMatrix", scaleMatrix)
         // 修改位置0的纹理渲染，改成渲染图片
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, imgTexture)
@@ -32,7 +38,8 @@ class CustomImageFilter(private val context: Context) : GpuImageFilter(context, 
     }
 
     override fun onSurfaceChanged(width: Int, height: Int) {
-        matrix = changeMvpMatrixInside(width.toFloat(), height.toFloat(), imgWidth.toFloat(), imgHeight.toFloat())
+        // 构建正视投影矩阵
+        scaleMatrix = changeMvpMatrixInside(width.toFloat(), height.toFloat(), imgWidth.toFloat(), imgHeight.toFloat())
     }
 
     override fun getVertexPosition(): FloatArray = vertexData
@@ -71,10 +78,10 @@ class CustomImageFilter(private val context: Context) : GpuImageFilter(context, 
             "attribute vec4 aPos;\n" +
             // 纹理坐标
             "attribute vec2 aTexPos;\n" +
-            "uniform mat4 uMatrix;\n" +
+            "uniform mat4 scaleMatrix;\n" +
             "varying vec2 vTexPos;\n" +
             "void main() {\n" +
-            "   gl_Position = uMatrix * aPos;" +
+            "   gl_Position = scaleMatrix * aPos;" +
             "   vTexPos = aTexPos;\n" +
             "}\n"
 

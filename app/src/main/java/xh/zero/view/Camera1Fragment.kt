@@ -16,7 +16,7 @@ import timber.log.Timber
 import xh.zero.widgets.BaseSurfaceView
 
 /**
- * Camera1 API
+ * Camera1相机
  */
 abstract class Camera1Fragment<VIEW: ViewBinding> : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFrameAvailableListener {
 

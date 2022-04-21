@@ -9,6 +9,7 @@ import android.media.ImageReader
 import android.os.*
 import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.exifinterface.media.ExifInterface
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import xh.zero.core.utils.ToastUtil
 import xh.zero.utils.OrientationLiveData
 import java.io.*
 import java.lang.RuntimeException
@@ -30,6 +32,9 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+/**
+ * Camera2无预览相机
+ */
 abstract class Camera2SilentFragment<VIEW: ViewBinding> : Fragment() {
 
     protected lateinit var binding: VIEW
@@ -102,22 +107,10 @@ abstract class Camera2SilentFragment<VIEW: ViewBinding> : Fragment() {
             .maxByOrNull { it.height * it.width }!!
         imageReader = ImageReader.newInstance(size.width, size.height, ImageFormat.JPEG, IMAGE_BUFFER_SIZE)
 
-//        getSurfaceView().holder.setFixedSize(getSurfaceView().width, getSurfaceView().height)
-
         val targets = listOf<Surface>(imageReader.surface)
         session = createCaptureSession(camera, targets, cameraHandler)
-        val captureRequest = camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
-            addTarget(imageReader.surface)
-        }
-        session.setRepeatingRequest(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
-            override fun onCaptureCompleted(
-                session: CameraCaptureSession,
-                request: CaptureRequest,
-                result: TotalCaptureResult
-            ) {
-                // 一次请求的捕获完成
-            }
-        }, cameraHandler)
+
+        ToastUtil.show(requireContext(), "摄像头<id: $cameraId>已经开启")
     }
 
     @SuppressLint("MissingPermission")
@@ -260,8 +253,8 @@ abstract class Camera2SilentFragment<VIEW: ViewBinding> : Fragment() {
 
     private suspend fun takePhoto(): CombinedCaptureResult = suspendCoroutine { cont ->
         @Suppress("ControlFlowWithEmptyBody")
-        while (imageReader.acquireNextImage() != null) {
-        }
+//        while (imageReader.acquireNextImage() != null) {
+//        }
 
         // Start a new image queue
         val imageQueue = ArrayBlockingQueue<Image>(IMAGE_BUFFER_SIZE)
@@ -274,6 +267,13 @@ abstract class Camera2SilentFragment<VIEW: ViewBinding> : Fragment() {
         val captureRequest = session.device.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
             .apply { addTarget(imageReader.surface) }
         session.capture(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
+            override fun onCaptureFailed(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                failure: CaptureFailure
+            ) {
+                Timber.d("onCaptureFailed: ${failure.reason}")
+            }
 
             override fun onCaptureStarted(
                 session: CameraCaptureSession,
