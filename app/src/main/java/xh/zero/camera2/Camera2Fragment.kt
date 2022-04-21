@@ -215,30 +215,27 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
                         .copy(Bitmap.Config.ARGB_8888, true)
                     val left = leftTop.x
                     val right = rightTop.x
+                    val color = Color.argb(255, 255, 0, 0)
                     for (x in leftTop.x..rightTop.x) {
 
                         for (y in leftTop.y..(leftTop.y + 2)) {
                             // 上横线
-                            val color = Color.argb(255, 255, 255, 136)
                             bitmap.setPixel(x, y, color)
                         }
 
                         for (y in (leftBottom.y - 2)..leftBottom.y) {
                             // 下横线
-                            val color = Color.argb(255, 255, 255, 136)
                             bitmap.setPixel(x, y, color)
                         }
 
                         for (y in leftTop.y..leftBottom.y) {
                             if (x >= left && x <= left + 2) {
                                 // 左竖线
-                                val color = Color.argb(255, 255, 255, 136)
                                 bitmap.setPixel(x, y, color)
                             }
 
                             if (x >= right - 2 && x <= right) {
                                 // 右竖线
-                                val color = Color.argb(255, 255, 255, 136)
                                 bitmap.setPixel(x, y, color)
                             }
                         }

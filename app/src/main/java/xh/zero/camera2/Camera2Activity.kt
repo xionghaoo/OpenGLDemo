@@ -8,6 +8,7 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Size
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
@@ -88,7 +89,7 @@ class Camera2Activity : AppCompatActivity() {
                             lp.height = metrics.height()
 
                             // 只在水平方向加
-                            initialIndicatorRect(lp.width, lp.height, maxImageSize.width, maxImageSize.height)
+                            initialIndicatorRect(lp.width, lp.height, Size(metrics.width(), metrics.height()), maxImageSize.width, maxImageSize.height)
                         }
                         lp.gravity = Gravity.CENTER
                         fragment = Camera2PreviewFragment.newInstance(cameraId)
@@ -105,12 +106,13 @@ class Camera2Activity : AppCompatActivity() {
     /**
      * 给预览和成像加上指示器矩形
      */
-    private fun initialIndicatorRect(viewW: Int, viewH: Int, imageW: Int, imageH: Int) {
+    private fun initialIndicatorRect(viewW: Int, viewH: Int, screenSize: Size, imageW: Int, imageH: Int) {
         binding.vIndicatorRect.visibility = View.VISIBLE
 
+        val r = screenSize.width.toFloat() / screenSize.height
         val ratio = 0.75f
         val indicatorW = (ratio * viewW).toInt()
-        val indicatorH = (ratio * viewH).toInt()
+        val indicatorH = (indicatorW / r).toInt()
 
         val lp = binding.vIndicatorRect.layoutParams as FrameLayout.LayoutParams
         lp.width = indicatorW
@@ -118,7 +120,7 @@ class Camera2Activity : AppCompatActivity() {
         lp.gravity = Gravity.CENTER
 
         val imageDrawRectW = (ratio * imageW).toInt()
-        val imageDrawRectH = (ratio * imageH).toInt()
+        val imageDrawRectH = (imageDrawRectW / r).toInt()
         leftTop.x = ((imageW - imageDrawRectW) / 2f).toInt()
         leftTop.y = ((imageH - imageDrawRectH) / 2f).toInt()
         leftBottom.x = leftTop.x
