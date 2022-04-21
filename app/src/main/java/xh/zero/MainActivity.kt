@@ -18,6 +18,7 @@ import xh.zero.camera2.Camera2Activity
 import xh.zero.camerax.CameraXActivity
 import xh.zero.core.startPlainActivity
 import xh.zero.databinding.ActivityMainBinding
+import xh.zero.filterchain.FilterChainActivity
 import xh.zero.tools.SilentCaptureActivity
 
 class MainActivity : AppCompatActivity() {
@@ -42,7 +43,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnCameraFilterChain.setOnClickListener {
-
+            startPlainActivity(FilterChainActivity::class.java)
         }
 
         binding.btnCameraCaptureSilent.setOnClickListener {

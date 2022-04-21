@@ -80,7 +80,16 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
             // 相机的图像输出会根据设置的目标Surface来生成缓冲区
             // 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
             // 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
-            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
+
+            val characteristic = cameraManager.getCameraCharacteristics(cameraId)
+            val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+            configurationMap?.getOutputSizes(ImageFormat.JPEG)
+                ?.maxByOrNull { it.height * it.width }
+                ?.also { maxCameraSize ->
+                    surfaceTexture.setDefaultBufferSize(maxCameraSize.width, maxCameraSize.height)
+                }
+
+//            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
             Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
             initializeCamera()
         }

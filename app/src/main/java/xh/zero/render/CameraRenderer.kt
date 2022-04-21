@@ -92,7 +92,7 @@ class CameraRenderer(
         aTextureCoord = shaderProgram.getAttribute("aCoord")
 
         // 根据摄像头本身的角度不同，这个旋转可能不需要
-        initialHorizontalAdjustMatrix(needScale = false, ignore = true)
+        initialHorizontalAdjustMatrix(needScale = false, ignore = false)
 
         externalTextureID = OpenGLUtil.createExternalTexture()
         // 创建一个接收相机预览的texture
@@ -170,6 +170,7 @@ class CameraRenderer(
         } else {
             // 缩放矩阵
             val scale: Float = listener.getViewSize().width.toFloat() / listener.getViewSize().height
+//            val scale: Float = listener.getViewSize().height.toFloat() / listener.getViewSize().width
             Timber.d("是否缩放：${needScale}，缩放比例：${scale}")
             val scaleMatrix = FloatArray(16)
             // 生成单位矩阵
