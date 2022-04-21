@@ -56,5 +56,14 @@
         android:layout_marginEnd="30dp"
         android:text="渲染连测试" />
 
+    <Button
+        android:id="@+id/btn_camera_capture_silent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="30dp"
+        android:text="无预览拍照测试" />
+
 
 </LinearLayout>

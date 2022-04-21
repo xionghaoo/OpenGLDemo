@@ -17,6 +17,7 @@ import xh.zero.ImageActivity
 import xh.zero.R
 import xh.zero.core.replaceFragment
 import xh.zero.core.utils.SystemUtil
+import xh.zero.core.utils.ToastUtil
 import xh.zero.databinding.ActivityCamera2Binding
 
 class Camera2Activity : AppCompatActivity() {
@@ -90,7 +91,7 @@ class Camera2Activity : AppCompatActivity() {
                             initialIndicatorRect(lp.width, lp.height, maxImageSize.width, maxImageSize.height)
                         }
                         lp.gravity = Gravity.CENTER
-                        fragment = Camera2PreviewFragment.newInstance(index.toString())
+                        fragment = Camera2PreviewFragment.newInstance(cameraId)
                         replaceFragment(fragment, R.id.fragment_container)
                     }
 

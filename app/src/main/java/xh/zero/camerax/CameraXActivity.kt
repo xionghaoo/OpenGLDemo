@@ -88,7 +88,7 @@ class CameraXActivity : AppCompatActivity() {
                                 }
                                 lp.gravity = Gravity.CENTER
 
-                                fragment =  CameraXFragment.newInstance(index.toString())
+                                fragment =  CameraXFragment.newInstance(cameraId)
                                 replaceFragment(fragment, R.id.fragment_container)
                             }
 

@@ -55,7 +55,7 @@ class CameraXFragment private constructor() : Fragment() {
 
     private var displayId: Int = -1
     private var cameraProvider: ProcessCameraProvider? = null
-    private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
+//    private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
     private lateinit var windowManager: WindowManager
     private var camera: Camera? = null
 
@@ -109,11 +109,11 @@ class CameraXFragment private constructor() : Fragment() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
         cameraProviderFuture.addListener({
             cameraProvider = cameraProviderFuture.get()
-            lensFacing = when {
-                hasBackCamera() -> CameraSelector.LENS_FACING_BACK
-                hasFrontCamera() -> CameraSelector.LENS_FACING_FRONT
-                else -> throw IllegalStateException("Back and front camera are unavailable")
-            }
+//            lensFacing = when {
+//                hasBackCamera() -> CameraSelector.LENS_FACING_BACK
+//                hasFrontCamera() -> CameraSelector.LENS_FACING_FRONT
+//                else -> throw IllegalStateException("Back and front camera are unavailable")
+//            }
             bindCameraUseCases()
         }, ContextCompat.getMainExecutor(requireContext()))
     }
@@ -336,7 +336,7 @@ class CameraXFragment private constructor() : Fragment() {
             val metadata = ImageCapture.Metadata().apply {
 
                 // Mirror image when using the front camera
-                isReversedHorizontal = lensFacing == CameraSelector.LENS_FACING_FRONT
+//                isReversedHorizontal = lensFacing == CameraSelector.LENS_FACING_FRONT
             }
 
             // Create output options object which contains file + metadata

@@ -24,6 +24,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OpenGLDemo">
         <activity
+            android:name=".tools.SilentCaptureActivity"
+            android:exported="false"
+            android:screenOrientation="userLandscape"/>
+        <activity
             android:name=".filterchain.FilterChainActivity"
             android:exported="false" />
         <activity

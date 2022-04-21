@@ -31,7 +31,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
+abstract class Camera2SilentFragment<VIEW: ViewBinding> : Fragment() {
 
     protected lateinit var binding: VIEW
     protected abstract val cameraId: String
@@ -70,20 +70,22 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
 
     abstract fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): VIEW
 
-    abstract fun getSurfaceView(): BaseSurfaceView
+//    abstract fun getSurfaceView(): BaseSurfaceView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        getSurfaceView().setOnSurfaceCreated {
-            surfaceTexture = it
-            // 设置缓冲区大小，用来接收相机输出的图像帧缓冲，这里的设置为Fragment的尺寸
-            // 相机的图像输出会根据设置的目标Surface来生成缓冲区
-            // 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
-            // 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
-            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
-            Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
-            initializeCamera()
-        }
+//        getSurfaceView().setOnSurfaceCreated {
+//            surfaceTexture = it
+//            // 设置缓冲区大小，用来接收相机输出的图像帧缓冲，这里的设置为Fragment的尺寸
+//            // 相机的图像输出会根据设置的目标Surface来生成缓冲区
+//            // 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
+//            // 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
+//            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
+//            Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
+//            initializeCamera()
+//        }
+
+        initializeCamera()
 
         // Used to rotate the output media to match device orientation
         relativeOrientation = OrientationLiveData(requireContext(), characteristics).apply {
@@ -101,14 +103,12 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
             .maxByOrNull { it.height * it.width }!!
         imageReader = ImageReader.newInstance(size.width, size.height, ImageFormat.JPEG, IMAGE_BUFFER_SIZE)
 
-        getSurfaceView().holder.setFixedSize(getSurfaceView().width, getSurfaceView().height)
+//        getSurfaceView().holder.setFixedSize(getSurfaceView().width, getSurfaceView().height)
 
-        val surface = Surface(surfaceTexture)
-        val targets = listOf<Surface>(surface, imageReader.surface)
+        val targets = listOf<Surface>(imageReader.surface)
         session = createCaptureSession(camera, targets, cameraHandler)
-        val captureRequest = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
-            addTarget(surface)
-//            addTarget(imageReader.surface)
+        val captureRequest = camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
+            addTarget(imageReader.surface)
         }
         session.setRepeatingRequest(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
             override fun onCaptureCompleted(
@@ -177,7 +177,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
     /**
      * 拍照
      */
-    fun takePicture(leftTop: Point?, leftBottom: Point?, rightTop: Point?, drawRect: Boolean = false, complete: (String) -> Unit) {
+    fun takePicture(complete: (String) -> Unit) {
         // Disable click listener to prevent multiple requests simultaneously in flight
 //        it.isEnabled = false
 
@@ -198,47 +198,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
                     exif.saveAttributes()
                     Timber.d("EXIF metadata saved: ${output.absolutePath}")
                 }
-
-                if (drawRect && leftTop != null && leftBottom != null && rightTop != null) {
-                    Timber.d("给图片加上指示器矩形: $leftTop, $leftBottom, $rightTop")
-                    // 给图片加上指示器矩形
-                    val bitmap = BitmapFactory.decodeFile(output.absolutePath)
-                        .copy(Bitmap.Config.ARGB_8888, true)
-                    val left = leftTop.x
-                    val right = rightTop.x
-                    for (x in leftTop.x..rightTop.x) {
-
-                        for (y in leftTop.y..(leftTop.y + 2)) {
-                            // 上横线
-                            val color = Color.argb(255, 255, 255, 136)
-                            bitmap.setPixel(x, y, color)
-                        }
-
-                        for (y in (leftBottom.y - 2)..leftBottom.y) {
-                            // 下横线
-                            val color = Color.argb(255, 255, 255, 136)
-                            bitmap.setPixel(x, y, color)
-                        }
-
-                        for (y in leftTop.y..leftBottom.y) {
-                            if (x >= left && x <= left + 2) {
-                                // 左竖线
-                                val color = Color.argb(255, 255, 255, 136)
-                                bitmap.setPixel(x, y, color)
-                            }
-
-                            if (x >= right - 2 && x <= right) {
-                                // 右竖线
-                                val color = Color.argb(255, 255, 255, 136)
-                                bitmap.setPixel(x, y, color)
-                            }
-                        }
-                    }
-                    val bos = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
-                    FileOutputStream(output).use { it.write(bos.toByteArray()) }
-                }
-
+//                imageReader.acquireNextImage().close()
                 withContext(Dispatchers.Main) {
                     complete(output.absolutePath)
                 }
@@ -312,8 +272,8 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
             imageQueue.add(image)
         }, imageReaderHandler)
 
-        val captureRequest = session.device.createCaptureRequest(
-            CameraDevice.TEMPLATE_STILL_CAPTURE).apply { addTarget(imageReader.surface) }
+        val captureRequest = session.device.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+            .apply { addTarget(imageReader.surface) }
         session.capture(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
 
             override fun onCaptureStarted(
