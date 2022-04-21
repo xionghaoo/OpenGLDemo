@@ -18,7 +18,6 @@ class GpuImageFilterGroup(private val context: Context): GLSurfaceView.Renderer 
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-
         val display = context.resources.displayMetrics
         frameBuffer = FrameBuffer(display.widthPixels, display.heightPixels)
         filters.forEach { filter ->
@@ -28,7 +27,6 @@ class GpuImageFilterGroup(private val context: Context): GLSurfaceView.Renderer 
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-        Timber.d("onSurfaceChanged: $width, $height")
         // 视口变换，属于OpenGL坐标系变换的最后一步
         // 在对观察者坐标进行裁剪以后，再进行正视投影或者透视投影得到OpenGL标准化坐标
         // ，再把OpenGL的标准化坐标转变为屏幕坐标，和屏幕上的像素点一一对应

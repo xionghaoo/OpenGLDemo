@@ -21,6 +21,7 @@ class CustomImageFilter(private val context: Context) : GpuImageFilter(context, 
         imgWidth = bitmap.width
         imgHeight = bitmap.height
         val matrix = android.graphics.Matrix()
+        // 垂直镜像翻转图片
         matrix.postScale(1f, -1f)
         imgTexture = createImageTexture(Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true))
     }

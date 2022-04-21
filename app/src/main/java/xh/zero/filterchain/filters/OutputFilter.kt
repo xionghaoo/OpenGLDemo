@@ -2,6 +2,10 @@ package xh.zero.filterchain.filters
 
 import android.content.Context
 
+/**
+ * 输出过滤器
+ * 默认是输出到屏幕，也可以改成其他位置
+ */
 class OutputFilter(context: Context) : GpuImageFilter(context) {
     override fun onCreate() {
     }
