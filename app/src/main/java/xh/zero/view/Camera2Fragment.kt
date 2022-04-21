@@ -1,4 +1,4 @@
-package xh.zero.camera2
+package xh.zero.view
 
 import android.annotation.SuppressLint
 import android.content.Context

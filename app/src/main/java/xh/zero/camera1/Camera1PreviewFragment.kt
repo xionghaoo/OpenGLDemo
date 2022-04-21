@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import xh.zero.databinding.FragmentCamera1PreviewBinding
+import xh.zero.view.Camera1Fragment
 import xh.zero.widgets.BaseSurfaceView
 
 class Camera1PreviewFragment : Camera1Fragment<FragmentCamera1PreviewBinding>() {

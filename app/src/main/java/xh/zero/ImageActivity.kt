@@ -11,7 +11,8 @@ import xh.zero.databinding.ActivityImageBinding
 class ImageActivity : AppCompatActivity() {
 
     companion object {
-        fun start(context: Context?, path: String) {
+        fun start(context: Context?, path: String?) {
+            if (path == null) return
             context?.startActivity(Intent(context, ImageActivity::class.java).apply {
                 putExtra("path", path)
             })

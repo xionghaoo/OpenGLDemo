@@ -1,4 +1,4 @@
-package xh.zero.camera2
+package xh.zero.view
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -20,7 +20,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import xh.zero.utils.OrientationLiveData
-import xh.zero.widgets.BaseSurfaceView
 import java.io.*
 import java.lang.RuntimeException
 import java.text.SimpleDateFormat

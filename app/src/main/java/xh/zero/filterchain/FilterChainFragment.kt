@@ -1,12 +1,9 @@
 package xh.zero.filterchain
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import xh.zero.R
-import xh.zero.camera2.Camera2Fragment
+import xh.zero.view.Camera2Fragment
 import xh.zero.databinding.FragmentFilterChainBinding
 import xh.zero.widgets.BaseSurfaceView
 

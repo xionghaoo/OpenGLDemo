@@ -1,4 +1,4 @@
-package xh.zero.camerax
+package xh.zero.view
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -22,10 +22,11 @@ import androidx.camera.core.Camera
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.core.net.toFile
+import androidx.viewbinding.ViewBinding
 import androidx.window.WindowManager
 import timber.log.Timber
 import xh.zero.R
-import xh.zero.databinding.FragmentCameraXBinding
+import xh.zero.widgets.BaseSurfaceView
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -45,13 +46,11 @@ typealias LumaListener = (luma: Double) -> Unit
 /**
  * CameraX测试预览画面无变形
  */
-class CameraXFragment private constructor() : Fragment() {
+abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
 
-    private lateinit var binding: FragmentCameraXBinding
+    protected lateinit var binding: VIEW
 
-    private val cameraId: String by lazy {
-        arguments?.getString("cameraId") ?: "0"
-    }
+    protected abstract val cameraId: String
 
     private var displayId: Int = -1
     private var cameraProvider: ProcessCameraProvider? = null
@@ -82,9 +81,13 @@ class CameraXFragment private constructor() : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentCameraXBinding.inflate(inflater, container, false)
+        binding = getViewBinding(inflater, container)
         return binding.root
     }
+
+    abstract fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): VIEW
+
+    abstract fun getSurfaceView(): BaseSurfaceView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -96,11 +99,11 @@ class CameraXFragment private constructor() : Fragment() {
 
         windowManager = WindowManager(view.context)
 
-        binding.viewfinder.setOnSurfaceCreated { sfTexture ->
+        getSurfaceView().setOnSurfaceCreated { sfTexture ->
             surfaceTexture = sfTexture
-            surfaceTexture.setDefaultBufferSize(binding.viewfinder.width, binding.viewfinder.height)
-            Timber.d("纹理缓冲区尺寸：${binding.viewfinder.width} x ${binding.viewfinder.height}")
-            displayId = binding.viewfinder.display.displayId
+            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
+            Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
+            displayId = getSurfaceView().display.displayId
             setupCamera()
         }
     }
@@ -137,10 +140,10 @@ class CameraXFragment private constructor() : Fragment() {
         val metrics = windowManager.getCurrentWindowMetrics().bounds
         Timber.d("Screen metrics: ${metrics.width()} x ${metrics.height()}")
 
-        val screenAspectRatio = aspectRatio(binding.viewfinder.width, binding.viewfinder.height)
+        val screenAspectRatio = aspectRatio(getSurfaceView().width, getSurfaceView().height)
         Timber.d("Preview aspect ratio: $screenAspectRatio")
 
-        val rotation = binding.viewfinder.display.rotation
+        val rotation = getSurfaceView().display.rotation
 
         // CameraProvider
         val cameraProvider = cameraProvider
@@ -324,7 +327,7 @@ class CameraXFragment private constructor() : Fragment() {
     /**
      * 拍照
      */
-    fun takePhoto(leftTop: Point, leftBottom: Point, rightTop: Point, rightBottom: Point) {
+    fun takePhoto(complete: (path: String?) -> Unit) {
 
         // Get a stable reference of the modifiable image capture use case
         imageCapture?.let { imageCapture ->
@@ -353,48 +356,10 @@ class CameraXFragment private constructor() : Fragment() {
 
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                         val savedUri = output.savedUri ?: Uri.fromFile(photoFile)
-                        Log.d(TAG, "Photo capture succeeded: $savedUri")
-
-                        Timber.d("处理输出图片：thread: ${Thread.currentThread()}")
-                        val outputFile = File(output.savedUri!!.path)
-
-                        // 给图片加上颜色
-                        val bitmap = BitmapFactory.decodeFile(outputFile.absolutePath)
-                            .copy(Bitmap.Config.ARGB_8888, true)
-                        val left = leftTop.x
-                        val right = rightTop.x
-                        for (x in leftTop.x..rightTop.x) {
-
-                            for (y in leftTop.y..(leftTop.y + 2)) {
-                                // 上横线
-                                val color = Color.argb(255, 255, 255, 136)
-                                bitmap.setPixel(x, y, color)
-                            }
-
-                            for (y in (leftBottom.y - 2)..leftBottom.y) {
-                                // 下横线
-                                val color = Color.argb(255, 255, 255, 136)
-                                bitmap.setPixel(x, y, color)
-                            }
-
-                            for (y in leftTop.y..leftBottom.y) {
-                                if (x >= left && x <= left + 2) {
-                                    // 左竖线
-                                    val color = Color.argb(255, 255, 255, 136)
-                                    bitmap.setPixel(x, y, color)
-                                }
-
-                                if (x >= right - 2 && x <= right) {
-                                    // 右竖线
-                                    val color = Color.argb(255, 255, 255, 136)
-                                    bitmap.setPixel(x, y, color)
-                                }
-                            }
+                        requireActivity().runOnUiThread {
+                            complete(savedUri.path)
                         }
-                        val bos = ByteArrayOutputStream()
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
-                        FileOutputStream(outputFile).use { it.write(bos.toByteArray()) }
-                        Timber.d("处理输出图片完成：thread: ${Thread.currentThread()}")
+                        Log.d(TAG, "Photo capture succeeded: ${savedUri.path}")
 
                         // We can only change the foreground Drawable using API level 23+ API
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -545,12 +510,6 @@ class CameraXFragment private constructor() : Fragment() {
                 File(it, appContext.resources.getString(R.string.app_name)).apply { mkdirs() } }
             return if (mediaDir != null && mediaDir.exists())
                 mediaDir else appContext.filesDir
-        }
-
-        fun newInstance(id: String) = CameraXFragment().apply {
-            arguments = Bundle().apply {
-                putString("cameraId", id)
-            }
         }
     }
 }

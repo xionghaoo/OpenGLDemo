@@ -18,9 +18,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.window.WindowManager
 import timber.log.Timber
+import xh.zero.ImageActivity
 import xh.zero.R
 import xh.zero.core.replaceFragment
 import xh.zero.core.utils.SystemUtil
+import xh.zero.core.utils.ToastUtil
 import xh.zero.databinding.ActivityCameraXactivityBinding
 
 class CameraXActivity : AppCompatActivity() {
@@ -31,13 +33,8 @@ class CameraXActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivityCameraXactivityBinding
-    private lateinit var fragment: CameraXFragment
+    private lateinit var fragment: CameraXPreviewFragment
     private var isInit = true
-
-    private val leftTop = Point(0, 0)
-    private val leftBottom = Point(0, 0)
-    private val rightTop = Point(0, 0)
-    private val rightBottom = Point(0, 0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +43,10 @@ class CameraXActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.btnCapture.setOnClickListener {
-            fragment.takePhoto(leftTop, leftBottom, rightTop, rightBottom)
+            fragment.takePhoto { path ->
+                ToastUtil.show(this, "照片已保存到：$path")
+                ImageActivity.start(this, path)
+            }
         }
 
         binding.root.viewTreeObserver.addOnGlobalLayoutListener {
@@ -88,51 +88,12 @@ class CameraXActivity : AppCompatActivity() {
                                 }
                                 lp.gravity = Gravity.CENTER
 
-                                fragment =  CameraXFragment.newInstance(cameraId)
+                                fragment =  CameraXPreviewFragment.newInstance(cameraId)
                                 replaceFragment(fragment, R.id.fragment_container)
                             }
 
                         val cameraOrientation = characteristic.get(CameraCharacteristics.SENSOR_ORIENTATION)
                         Timber.d("摄像头角度：$cameraOrientation")
-
-
-
-
-//                        val sizeList = configurationMap?.getOutputSizes(ImageFormat.JPEG)
-//                        var maxCameraSize = Size(0, 0)
-//                        // 相机支持的尺寸
-//                        sizeList?.forEach { size ->
-//                            Timber.d("camera support: [${size.width}, ${size.height}]")
-//                            if (size.height > maxCameraSize.height) {
-//                                maxCameraSize = size
-//                            }
-//                        }
-//
-//                        val metrics = WindowManager(this).getCurrentWindowMetrics().bounds
-//
-//                        // 屏幕尺寸不小于摄像头成像尺寸
-//                        if (metrics.width() >= maxCameraSize.width || metrics.height() >= maxCameraSize.height) {
-//
-//                        }
-//
-//                        // 屏幕缩放尺寸
-//                        val screenWidth = metrics.width() * SCREEN_SCALE
-//                        val screenHeight = metrics.height() * SCREEN_SCALE
-//
-//                        val lp = binding.vScreenRatioRect.layoutParams as FrameLayout.LayoutParams
-//                        lp.width = screenWidth.toInt()
-//                        lp.height = screenHeight.toInt()
-//
-//                        // 计算屏幕在图片上的位置，左上角的坐标就是最终需要的转换坐标
-//                        leftTop.x = ((maxCameraSize.width - screenWidth) / 2).toInt()
-//                        leftTop.y = ((maxCameraSize.height - screenHeight) / 2).toInt()
-//                        leftBottom.x = leftTop.x
-//                        leftBottom.y = (leftTop.y + screenHeight).toInt()
-//                        rightTop.x = (leftTop.x + screenWidth).toInt()
-//                        rightTop.y = leftTop.y
-//                        rightBottom.x = rightTop.x
-//                        rightBottom.y = (rightTop.y + screenHeight).toInt()
-
                     }
                 }
             }
