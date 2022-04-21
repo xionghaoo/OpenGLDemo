@@ -23,7 +23,7 @@ class Camera2Activity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCamera2Binding
     private var isInit = true
-    private lateinit var fragment: Camera2Fragment
+    private lateinit var fragment: Camera2PreviewFragment
 
     private val leftTop = Point(0, 0)
     private val leftBottom = Point(0, 0)
@@ -90,7 +90,7 @@ class Camera2Activity : AppCompatActivity() {
                             initialIndicatorRect(lp.width, lp.height, maxImageSize.width, maxImageSize.height)
                         }
                         lp.gravity = Gravity.CENTER
-                        fragment = Camera2Fragment.newInstance(index.toString())
+                        fragment = Camera2PreviewFragment.newInstance(index.toString())
                         replaceFragment(fragment, R.id.fragment_container)
                     }
 

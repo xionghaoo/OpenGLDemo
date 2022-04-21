@@ -13,13 +13,14 @@ import androidx.exifinterface.media.ExifInterface
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
+import androidx.viewbinding.ViewBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import xh.zero.databinding.FragmentCamera2Binding
 import xh.zero.utils.OrientationLiveData
+import xh.zero.widgets.BaseSurfaceView
 import java.io.*
 import java.lang.RuntimeException
 import java.text.SimpleDateFormat
@@ -30,12 +31,10 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class Camera2Fragment private constructor() : Fragment() {
+abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
 
-    private lateinit var binding: FragmentCamera2Binding
-    private val cameraId: String by lazy {
-        arguments?.getString("id") ?: "0"
-    }
+    protected lateinit var binding: VIEW
+    protected abstract val cameraId: String
 
     private lateinit var camera: CameraDevice
     private lateinit var session: CameraCaptureSession
@@ -65,20 +64,24 @@ class Camera2Fragment private constructor() : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentCamera2Binding.inflate(inflater, container, false)
+        binding = getViewBinding(inflater, container)
         return binding.root
     }
 
+    abstract fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): VIEW
+
+    abstract fun getSurfaceView(): BaseSurfaceView
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.viewfinder.setOnSurfaceCreated {
+        getSurfaceView().setOnSurfaceCreated {
             surfaceTexture = it
             // 设置缓冲区大小，用来接收相机输出的图像帧缓冲，这里的设置为Fragment的尺寸
             // 相机的图像输出会根据设置的目标Surface来生成缓冲区
             // 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
             // 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
-            surfaceTexture.setDefaultBufferSize(binding.viewfinder.width, binding.viewfinder.height)
-            Timber.d("纹理缓冲区尺寸：${binding.viewfinder.width} x ${binding.viewfinder.height}")
+            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
+            Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
             initializeCamera()
         }
 
@@ -98,7 +101,7 @@ class Camera2Fragment private constructor() : Fragment() {
             .maxByOrNull { it.height * it.width }!!
         imageReader = ImageReader.newInstance(size.width, size.height, ImageFormat.JPEG, IMAGE_BUFFER_SIZE)
 
-        binding.viewfinder.holder.setFixedSize(binding.viewfinder.width, binding.viewfinder.height)
+        getSurfaceView().holder.setFixedSize(getSurfaceView().width, getSurfaceView().height)
 
         val surface = Surface(surfaceTexture)
         val targets = listOf<Surface>(surface, imageReader.surface)
@@ -425,12 +428,6 @@ class Camera2Fragment private constructor() : Fragment() {
             if (!pictureDir.exists()) pictureDir.mkdir()
 //            return File(Environment.getExternalStorageDirectory(), "IMG_${sdf.format(Date())}.$extension")
             return File(pictureDir, "IMG_${sdf.format(Date())}.$extension")
-        }
-
-        fun newInstance(id: String) = Camera2Fragment().apply {
-            arguments = Bundle().apply {
-                putString("id", id)
-            }
         }
     }
 }
