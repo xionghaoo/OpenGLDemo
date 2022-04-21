@@ -1,6 +1,8 @@
-# OpenGl + Camera1/Camera2/CameraX
+# OpenGl ES + Camera1/Camera2/CameraX
+Camera API结合OpenGL实现竖直方向和水平方向无形变预览
 
-Camera API结合OpenGL实现无形变预览，包含竖直方向和水平方向
+# Camera模型示意图
+![camera模型][1]
 
 # 水平方向预览
 
@@ -28,3 +30,5 @@ Program由多个着色器组成，每一个着色器的输入都是下一级着�
 
 每个Program可以使用多个纹理，可以通过glsl的mix函数混合。
 
+
+[1]:https://github.com/xionghaoo/OpenGLDemo/blob/master/doc/camera_model.png?raw=true
