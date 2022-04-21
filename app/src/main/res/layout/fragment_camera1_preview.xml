@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <xh.zero.render.test.TestSurfaceView
+    <xh.zero.render.CameraSurfaceView
         android:id="@+id/viewfinder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

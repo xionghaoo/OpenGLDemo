@@ -13,10 +13,9 @@ import android.util.Size
 import timber.log.Timber
 import xh.zero.utils.OpenGLUtil
 import xh.zero.utils.ShaderProgram
+import xh.zero.widgets.OnTextureCreated
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-
-typealias OnTextureCreated = (SurfaceTexture) -> Unit
 
 class CameraRenderer(
     private val context: Context,

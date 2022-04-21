@@ -1,4 +1,4 @@
-package xh.zero.render.group
+package xh.zero.filterchain
 
 import android.opengl.GLES20
 

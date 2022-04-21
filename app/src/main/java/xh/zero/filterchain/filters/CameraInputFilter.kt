@@ -1,18 +1,14 @@
-package xh.zero.render.group
+package xh.zero.filterchain.filters
 
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext
-import android.opengl.GLES20
 import android.opengl.Matrix
 import android.util.Size
 import timber.log.Timber
-import xh.zero.render.CameraRenderer
 import xh.zero.utils.OpenGLUtil
-import xh.zero.utils.ShaderProgram
-
-typealias OnTextureCreated = (SurfaceTexture) -> Unit
+import xh.zero.widgets.OnTextureCreated
 
 class CameraInputFilter(
     private val context: Context,

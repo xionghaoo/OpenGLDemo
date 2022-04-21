@@ -26,8 +26,8 @@ class Camera1Activity : AppCompatActivity() {
         binding = ActivityCamera1Binding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        replaceFragment(Camera1Fragment.newInstance(0), R.id.fragment_container)
-//        initialScaleCameraPreview()
+//        replaceFragment(Camera1PreviewFragment.newInstance(0), R.id.fragment_container)
+        initialScaleCameraPreview()
     }
 
     private fun initialScaleCameraPreview() {
@@ -66,7 +66,7 @@ class Camera1Activity : AppCompatActivity() {
                         }
                         lp.gravity = Gravity.CENTER
 
-                        replaceFragment(Camera1Fragment.newInstance(index), R.id.fragment_container)
+                        replaceFragment(Camera1PreviewFragment.newInstance(index), R.id.fragment_container)
 
                     }
             }

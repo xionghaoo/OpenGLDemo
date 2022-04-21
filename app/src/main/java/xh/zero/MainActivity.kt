@@ -40,6 +40,10 @@ class MainActivity : AppCompatActivity() {
             startPlainActivity(Camera2Activity::class.java)
         }
 
+        binding.btnCameraFilterChain.setOnClickListener {
+
+        }
+
         // 必要权限申请
         permissionTask()
     }

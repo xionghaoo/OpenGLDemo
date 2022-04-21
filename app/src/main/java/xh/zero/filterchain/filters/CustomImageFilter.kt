@@ -1,13 +1,11 @@
-package xh.zero.render.group
+package xh.zero.filterchain.filters
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLUtils
 import android.opengl.Matrix
-import timber.log.Timber
 
 class CustomImageFilter(private val context: Context) : GpuImageFilter(context, vertexShaderCode, fragmentShaderCode) {
 

@@ -15,20 +15,18 @@ import android.view.SurfaceHolder
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.viewbinding.ViewBinding
 import timber.log.Timber
-import xh.zero.core.checkAllMatched
-import xh.zero.databinding.FragmentCamera1Binding
+import xh.zero.widgets.BaseSurfaceView
 
 /**
  * Camera1 API
  */
-class Camera1Fragment private constructor() : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFrameAvailableListener {
+abstract class Camera1Fragment<VIEW: ViewBinding> : Fragment(), Camera.PreviewCallback, SurfaceTexture.OnFrameAvailableListener {
 
-    private val cameraId: Int by lazy {
-        arguments?.getInt(ARG_CAMERA_ID) ?: 0
-    }
-    private lateinit var binding: FragmentCamera1Binding
 
+    protected lateinit var binding: VIEW
+    protected abstract val cameraId: Int
     private var camera: Camera? = null
     private var parameters: Camera.Parameters? = null
 
@@ -46,32 +44,34 @@ class Camera1Fragment private constructor() : Fragment(), Camera.PreviewCallback
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentCamera1Binding.inflate(inflater, container, false)
+        binding = getBindingView(inflater, container)
         return binding.root
     }
 
+    abstract fun getBindingView(inflater: LayoutInflater, container: ViewGroup?): VIEW
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.viewfinder.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) {
+//        surfaceView().holder.addCallback(object : SurfaceHolder.Callback {
+//            override fun surfaceCreated(holder: SurfaceHolder) {
+//
+//            }
+//
+//            override fun surfaceChanged(
+//                holder: SurfaceHolder,
+//                format: Int,
+//                width: Int,
+//                height: Int
+//            ) {
+//
+//            }
+//
+//            override fun surfaceDestroyed(holder: SurfaceHolder) {
+//                releaseCamera()
+//            }
+//        })
 
-            }
-
-            override fun surfaceChanged(
-                holder: SurfaceHolder,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
-
-            }
-
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-                releaseCamera()
-            }
-        })
-
-        binding.viewfinder.setOnSurfaceCreated { surfaceTexture ->
-            surfaceTexture.setDefaultBufferSize(binding.viewfinder.width, binding.viewfinder.height)
+        surfaceView().setOnSurfaceCreated { surfaceTexture ->
+            surfaceTexture.setDefaultBufferSize(surfaceView().width, surfaceView().height)
             openCamera(cameraId, surfaceTexture)
             startPreview()
         }
@@ -106,9 +106,9 @@ class Camera1Fragment private constructor() : Fragment(), Camera.PreviewCallback
         // 竖直和水平方向的宽高比是相反的，这里要分开计算
         val orientation = requireContext().resources.configuration.orientation
         val ratio = if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            binding.viewfinder.width.toFloat() / binding.viewfinder.height
+            surfaceView().width.toFloat() / surfaceView().height
         } else {
-            binding.viewfinder.height.toFloat() / binding.viewfinder.width
+            surfaceView().height.toFloat() / surfaceView().width
         }
         Timber.d("画面比例：$ratio")
         parameters?.supportedPreviewSizes
@@ -148,6 +148,8 @@ class Camera1Fragment private constructor() : Fragment(), Camera.PreviewCallback
         }
     }
 
+    abstract fun surfaceView(): BaseSurfaceView
+
     override fun onPreviewFrame(data: ByteArray?, camera: Camera?) {
 
     }
@@ -158,15 +160,5 @@ class Camera1Fragment private constructor() : Fragment(), Camera.PreviewCallback
 
     companion object {
         const val TAG = "Camera1Fragment"
-        private const val ARG_CAMERA_ID = "ARG_CAMERA_ID"
-
-        private const val IMAGE_BUFFER_SIZE: Int = 3
-
-        fun newInstance(cameraId: Int) =
-            Camera1Fragment().apply {
-                arguments = Bundle().apply {
-                    putInt(ARG_CAMERA_ID, cameraId)
-                }
-            }
     }
 }

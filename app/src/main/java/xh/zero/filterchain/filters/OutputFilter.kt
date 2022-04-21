@@ -1,8 +1,6 @@
-package xh.zero.render.group
+package xh.zero.filterchain.filters
 
 import android.content.Context
-import android.opengl.GLES20
-import timber.log.Timber
 
 class OutputFilter(context: Context) : GpuImageFilter(context) {
     override fun onCreate() {

@@ -1,11 +1,12 @@
 package xh.zero.render
 
 import android.content.Context
-import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.util.Size
+import xh.zero.widgets.BaseSurfaceView
+import xh.zero.widgets.OnTextureCreated
 
-class CameraSurfaceView : GLSurfaceView, CameraRenderer.OnViewSizeAvailableListener {
+class CameraSurfaceView : BaseSurfaceView, CameraRenderer.OnViewSizeAvailableListener {
 
     private val renderer: CameraRenderer
 
@@ -22,7 +23,7 @@ class CameraSurfaceView : GLSurfaceView, CameraRenderer.OnViewSizeAvailableListe
 
     override fun getViewSize(): Size = Size(width, height)
 
-    fun setOnSurfaceCreated(callback: OnTextureCreated) {
+    override fun setOnSurfaceCreated(callback: OnTextureCreated) {
         renderer.setOnSurfaceCreated(callback)
     }
 

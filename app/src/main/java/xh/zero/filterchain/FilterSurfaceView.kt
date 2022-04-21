@@ -1,19 +1,27 @@
-package xh.zero.render.test
+package xh.zero.filterchain
 
 import android.content.Context
+import android.graphics.SurfaceTexture
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.util.Size
-import xh.zero.render.group.*
+import xh.zero.filterchain.filters.*
+import xh.zero.widgets.BaseSurfaceView
+import xh.zero.widgets.OnTextureCreated
 
-class TestSurfaceView : GLSurfaceView, CameraInputFilter.OnViewSizeAvailableListener {
-    private val renderer: ImageFilterGroup
+class FilterSurfaceView : BaseSurfaceView, CameraInputFilter.OnViewSizeAvailableListener {
+
+    constructor(context: Context) : super(context)
+
+    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
+
+    private val renderer: GpuImageFilterGroup
 
     private val cameraInput: CameraInputFilter
 
     init {
         setEGLContextClientVersion(2)
-        renderer = ImageFilterGroup(context)
+        renderer = GpuImageFilterGroup(context)
         cameraInput = CameraInputFilter(context, this)
         renderer.addFilter(cameraInput)
         renderer.addFilter(CustomImageFilter(context))
@@ -22,13 +30,9 @@ class TestSurfaceView : GLSurfaceView, CameraInputFilter.OnViewSizeAvailableList
         renderMode = RENDERMODE_CONTINUOUSLY
     }
 
-    constructor(context: Context) : super(context)
-
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
-
     override fun getViewSize(): Size = Size(width, height)
 
-    fun setOnSurfaceCreated(callback: OnTextureCreated) {
+    override fun setOnSurfaceCreated(callback: OnTextureCreated) {
         cameraInput.setOnSurfaceCreated(callback)
     }
 

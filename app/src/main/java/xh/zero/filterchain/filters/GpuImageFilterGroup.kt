@@ -1,14 +1,14 @@
-package xh.zero.render.group
+package xh.zero.filterchain.filters
 
 import android.content.Context
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import timber.log.Timber
-import xh.zero.utils.OpenGLUtil
+import xh.zero.filterchain.FrameBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class ImageFilterGroup(private val context: Context): GLSurfaceView.Renderer {
+class GpuImageFilterGroup(private val context: Context): GLSurfaceView.Renderer {
 
     private val filters = ArrayList<GpuImageFilter>()
     private lateinit var frameBuffer: FrameBuffer
