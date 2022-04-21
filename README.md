@@ -1,5 +1,6 @@
 # OpenGl ES + Camera1/Camera2/CameraX
-Camera API结合OpenGL实现竖直方向和水平方向无形变预览
+1. Camera API结合OpenGL ES竖直方向和水平方向无形变预览
+2. OpenGL ES外部纹理贴图
 
 # Camera模型示意图
 ![camera模型][1]
