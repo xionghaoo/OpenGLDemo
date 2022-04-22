@@ -8,8 +8,6 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Size
-import android.widget.Button
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
@@ -19,7 +17,7 @@ import xh.zero.camerax.CameraXActivity
 import xh.zero.core.startPlainActivity
 import xh.zero.databinding.ActivityMainBinding
 import xh.zero.filterchain.FilterChainActivity
-import xh.zero.tools.SilentCaptureActivity
+import xh.zero.silentcamera.SilentCaptureActivity
 
 class MainActivity : AppCompatActivity() {
 

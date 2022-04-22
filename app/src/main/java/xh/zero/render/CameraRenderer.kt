@@ -22,6 +22,12 @@ class CameraRenderer(
     private var listener: OnViewSizeAvailableListener
 ) : GLSurfaceView.Renderer {
 
+    companion object {
+        // 预览画面缩放，rk3568需要
+        private const val SCALE_PREVIEW = false
+        private const val IGNORE_PREVIEW_TRANSFORM = false
+    }
+
     /**
      * GLSL程序，GPU程序段
      * 顶点着色器
@@ -92,7 +98,7 @@ class CameraRenderer(
         aTextureCoord = shaderProgram.getAttribute("aCoord")
 
         // 根据摄像头本身的角度不同，这个旋转可能不需要
-        initialHorizontalAdjustMatrix(needScale = false, ignore = false)
+        initialHorizontalAdjustMatrix(needScale = SCALE_PREVIEW, ignore = IGNORE_PREVIEW_TRANSFORM)
 
         externalTextureID = OpenGLUtil.createExternalTexture()
         // 创建一个接收相机预览的texture

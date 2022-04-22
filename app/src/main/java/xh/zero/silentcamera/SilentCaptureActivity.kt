@@ -1,12 +1,9 @@
-package xh.zero.tools
+package xh.zero.silentcamera
 
 import android.content.Context
-import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CameraMetadata
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.appcompat.app.AlertDialog
 import xh.zero.ImageActivity
 import xh.zero.R
 import xh.zero.core.replaceFragment

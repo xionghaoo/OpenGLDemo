@@ -1,12 +1,10 @@
-package xh.zero.tools
+package xh.zero.silentcamera
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import xh.zero.view.Camera2Fragment
 import xh.zero.databinding.FragmentSilentCaptureBinding
 import xh.zero.view.Camera2SilentFragment
-import xh.zero.widgets.BaseSurfaceView
 
 /**
  * 无预览拍照

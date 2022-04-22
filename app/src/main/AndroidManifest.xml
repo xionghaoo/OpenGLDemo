@@ -24,8 +24,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OpenGLDemo">
         <activity
-            android:name=".tools.SilentCaptureActivity"
-            android:exported="false"/>
+            android:name=".ImageAnalysisActivity"
+            android:exported="false" />
+        <activity
+            android:name=".silentcamera.SilentCaptureActivity"
+            android:exported="false" />
         <activity
             android:name=".filterchain.FilterChainActivity"
             android:exported="false" />
