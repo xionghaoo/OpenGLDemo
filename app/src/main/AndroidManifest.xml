@@ -53,7 +53,7 @@
         </activity>
         <activity
             android:name=".camerax.CameraXActivity"
-            android:exported="false" />
+            android:exported="false"/>
     </application>
 
 </manifest>

@@ -45,7 +45,7 @@ class CameraXActivity : AppCompatActivity() {
         binding.btnCapture.setOnClickListener {
             fragment.takePhoto { path ->
                 ToastUtil.show(this, "照片已保存到：$path")
-                ImageActivity.start(this, path)
+                ImageActivity.start(this, path, requestedOrientation)
             }
         }
 

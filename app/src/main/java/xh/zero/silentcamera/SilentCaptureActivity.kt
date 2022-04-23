@@ -35,7 +35,7 @@ class SilentCaptureActivity : AppCompatActivity() {
                 binding.btnCapture.setOnClickListener {
                     fragment.takePicture { imgPath ->
                         ToastUtil.show(this, "拍照完成：$imgPath")
-                        ImageActivity.start(this, imgPath)
+                        ImageActivity.start(this, imgPath, requestedOrientation)
                     }
                 }
             }

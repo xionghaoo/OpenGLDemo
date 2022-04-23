@@ -23,8 +23,9 @@ class CameraRenderer(
 ) : GLSurfaceView.Renderer {
 
     companion object {
-        // 预览画面缩放，rk3568需要
-        private const val SCALE_PREVIEW = false
+        // 目前测试只有Nexus6p需要缩放修正预览
+        private const val SCALE_PREVIEW = true
+        // rk3568需要旋转，不需要缩放
         private const val IGNORE_PREVIEW_TRANSFORM = false
     }
 
@@ -174,14 +175,17 @@ class CameraRenderer(
         if (context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT || ignore) {
             Matrix.setIdentityM(horizontalAdjustMatrix, 0)
         } else {
+            // 横屏，width > height
             // 缩放矩阵
-            val scale: Float = listener.getViewSize().width.toFloat() / listener.getViewSize().height
-//            val scale: Float = listener.getViewSize().height.toFloat() / listener.getViewSize().width
+//            val scale: Float = listener.getViewSize().width.toFloat() / listener.getViewSize().height
+            val scale: Float = listener.getViewSize().height.toFloat() / listener.getViewSize().width
             Timber.d("是否缩放：${needScale}，缩放比例：${scale}")
             val scaleMatrix = FloatArray(16)
             // 生成单位矩阵
             Matrix.setIdentityM(scaleMatrix, 0)
-            Matrix.scaleM(scaleMatrix, 0, 1f, if (needScale) scale else 1f, 1f)
+            // 由于缩放以后需要旋转90度，
+            // 这里缩放水平方向时，修改y的值，修改竖直方向时，修改x的值，这里水平和竖直相对于此时屏幕的方向
+            Matrix.scaleM(scaleMatrix, 0, if (needScale) scale else 1f, 1f, 1f)
 
             val rotateMatrix = FloatArray(16)
             // 矩阵屏幕朝里方向顺时针旋转90度，相当于画面逆时针旋转90度

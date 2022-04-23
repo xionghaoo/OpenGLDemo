@@ -85,16 +85,16 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
             // 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
 
             // TODO 最大预览画面，rk3568用这个
-            val characteristic = cameraManager.getCameraCharacteristics(cameraId)
-            val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-            configurationMap?.getOutputSizes(ImageFormat.JPEG)
-                ?.maxByOrNull { it.height * it.width }
-                ?.also { maxCameraSize ->
-                    surfaceTexture.setDefaultBufferSize(maxCameraSize.width, maxCameraSize.height)
-                }
+//            val characteristic = cameraManager.getCameraCharacteristics(cameraId)
+//            val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+//            configurationMap?.getOutputSizes(ImageFormat.JPEG)
+//                ?.maxByOrNull { it.height * it.width }
+//                ?.also { maxCameraSize ->
+//                    surfaceTexture.setDefaultBufferSize(maxCameraSize.width, maxCameraSize.height)
+//                }
 
             // TODO 正常的摄像头用这个
-//            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
+            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
             Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
             initializeCamera()
         }
@@ -190,7 +190,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
     /**
      * 拍照
      */
-    fun takePicture(leftTop: Point?, leftBottom: Point?, rightTop: Point?, drawRect: Boolean = false, complete: (String) -> Unit) {
+    fun takePicture(rect: Rect, drawRect: Boolean = false, complete: (String) -> Unit) {
         // Disable click listener to prevent multiple requests simultaneously in flight
 //        it.isEnabled = false
 
@@ -212,38 +212,19 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
                     Timber.d("EXIF metadata saved: ${output.absolutePath}")
                 }
 
-                if (drawRect && leftTop != null && leftBottom != null && rightTop != null) {
-                    Timber.d("给图片加上指示器矩形: $leftTop, $leftBottom, $rightTop")
+                if (drawRect) {
+                    Timber.d("给图片加上指示器矩形: $rect")
                     // 给图片加上指示器矩形
                     val bitmap = BitmapFactory.decodeFile(output.absolutePath)
                         .copy(Bitmap.Config.ARGB_8888, true)
-                    val left = leftTop.x
-                    val right = rightTop.x
-                    val color = Color.argb(255, 255, 0, 0)
-                    for (x in leftTop.x..rightTop.x) {
-
-                        for (y in leftTop.y..(leftTop.y + 2)) {
-                            // 上横线
-                            bitmap.setPixel(x, y, color)
-                        }
-
-                        for (y in (leftBottom.y - 2)..leftBottom.y) {
-                            // 下横线
-                            bitmap.setPixel(x, y, color)
-                        }
-
-                        for (y in leftTop.y..leftBottom.y) {
-                            if (x >= left && x <= left + 2) {
-                                // 左竖线
-                                bitmap.setPixel(x, y, color)
-                            }
-
-                            if (x >= right - 2 && x <= right) {
-                                // 右竖线
-                                bitmap.setPixel(x, y, color)
-                            }
-                        }
+                    val canvas = Canvas(bitmap)
+                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        strokeWidth = 2f
+                        style = Paint.Style.STROKE
+                        color = Color.argb(255, 255, 0, 0)
                     }
+                    canvas.drawRect(rect, paint)
+                    canvas.setBitmap(bitmap)
                     val bos = ByteArrayOutputStream()
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
                     FileOutputStream(output).use { it.write(bos.toByteArray()) }

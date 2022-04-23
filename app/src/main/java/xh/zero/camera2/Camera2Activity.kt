@@ -3,7 +3,7 @@ package xh.zero.camera2
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.ImageFormat
-import android.graphics.Point
+import android.graphics.Rect
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import androidx.appcompat.app.AppCompatActivity
@@ -12,13 +12,13 @@ import android.util.Size
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.SeekBar
 import androidx.window.WindowManager
 import timber.log.Timber
 import xh.zero.ImageActivity
 import xh.zero.R
 import xh.zero.core.replaceFragment
 import xh.zero.core.utils.SystemUtil
-import xh.zero.core.utils.ToastUtil
 import xh.zero.databinding.ActivityCamera2Binding
 
 class Camera2Activity : AppCompatActivity() {
@@ -27,10 +27,14 @@ class Camera2Activity : AppCompatActivity() {
     private var isInit = true
     private lateinit var fragment: Camera2PreviewFragment
 
-    private val leftTop = Point(0, 0)
-    private val leftBottom = Point(0, 0)
-    private val rightTop = Point(0, 0)
-    private val rightBottom = Point(0, 0)
+    private var screenSize: Size? = null
+    private var viewW: Int = 0
+    private var viewH: Int = 0
+    private var imageW: Int = 0
+    private var imageH: Int = 0
+
+    private val imgRect = Rect()
+    private val viewRect = Rect()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,11 +50,29 @@ class Camera2Activity : AppCompatActivity() {
         }
 
         binding.btnCapture.setOnClickListener {
-            fragment.takePicture(leftTop, leftBottom, rightTop, true) { imgPath ->
-                ImageActivity.start(this, imgPath)
+            fragment.takePicture(imgRect, true) { imgPath ->
+                ImageActivity.start(this, imgPath, requestedOrientation)
             }
         }
 
+        binding.sbRectPercent.progress = 75
+        binding.sbRectPercent.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                initialIndicatorRect(progress)
+                binding.tvRectPercent.text = "${progress}%"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+
+            }
+        })
+
+        binding.btnResetRect.setOnClickListener {
+            binding.sbRectPercent.progress = 75
+        }
     }
 
     private fun initialCameraView() {
@@ -88,8 +110,13 @@ class Camera2Activity : AppCompatActivity() {
                             lp.width = (metrics.height() / ratio).toInt()
                             lp.height = metrics.height()
 
+                            viewW = lp.width
+                            viewH = lp.height
+                            imageW = maxImageSize.width
+                            imageH = maxImageSize.height
+                            screenSize = Size(metrics.width(), metrics.height())
                             // 只在水平方向加
-                            initialIndicatorRect(lp.width, lp.height, Size(metrics.width(), metrics.height()), maxImageSize.width, maxImageSize.height)
+                            initialIndicatorRect(binding.sbRectPercent.progress)
                         }
                         lp.gravity = Gravity.CENTER
                         fragment = Camera2PreviewFragment.newInstance(cameraId)
@@ -106,26 +133,25 @@ class Camera2Activity : AppCompatActivity() {
     /**
      * 给预览和成像加上指示器矩形
      */
-    private fun initialIndicatorRect(viewW: Int, viewH: Int, screenSize: Size, imageW: Int, imageH: Int) {
+    private fun initialIndicatorRect(percent: Int) {
         binding.vIndicatorRect.visibility = View.VISIBLE
 
-        val r = screenSize.width.toFloat() / screenSize.height
-        val ratio = 0.75f
+        val r = screenSize!!.width.toFloat() / screenSize!!.height
+        val ratio = percent * 0.01f
         val indicatorW = (ratio * viewW).toInt()
         val indicatorH = (indicatorW / r).toInt()
 
-        val lp = binding.vIndicatorRect.layoutParams as FrameLayout.LayoutParams
-        lp.width = indicatorW
-        lp.height = indicatorH
-        lp.gravity = Gravity.CENTER
+        viewRect.left = (screenSize!!.width - indicatorW) / 2
+        viewRect.right = viewRect.left + indicatorW
+        viewRect.top = (screenSize!!.height - indicatorH) / 2
+        viewRect.bottom = viewRect.top + indicatorH
+        binding.vIndicatorRect.drawRect(viewRect)
 
         val imageDrawRectW = (ratio * imageW).toInt()
         val imageDrawRectH = (imageDrawRectW / r).toInt()
-        leftTop.x = ((imageW - imageDrawRectW) / 2f).toInt()
-        leftTop.y = ((imageH - imageDrawRectH) / 2f).toInt()
-        leftBottom.x = leftTop.x
-        leftBottom.y = leftTop.y + imageDrawRectH
-        rightTop.x = leftTop.x + imageDrawRectW
-        rightTop.y = leftTop.y
+        imgRect.left = ((imageW - imageDrawRectW) / 2f).toInt()
+        imgRect.top = ((imageH - imageDrawRectH) / 2f).toInt()
+        imgRect.bottom = imgRect.top + imageDrawRectH
+        imgRect.right = imgRect.left + imageDrawRectW
     }
 }
