@@ -23,6 +23,10 @@ import xh.zero.databinding.ActivityCamera2Binding
 
 class Camera2Activity : AppCompatActivity() {
 
+    companion object {
+        private const val INITIAL_RECT_RATIO = 70
+    }
+
     private lateinit var binding: ActivityCamera2Binding
     private var isInit = true
     private lateinit var fragment: Camera2PreviewFragment
@@ -55,7 +59,8 @@ class Camera2Activity : AppCompatActivity() {
             }
         }
 
-        binding.sbRectPercent.progress = 75
+        binding.sbRectPercent.progress = INITIAL_RECT_RATIO
+        binding.tvRectPercent.text = "${INITIAL_RECT_RATIO}%"
         binding.sbRectPercent.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 initialIndicatorRect(progress)
@@ -71,7 +76,7 @@ class Camera2Activity : AppCompatActivity() {
         })
 
         binding.btnResetRect.setOnClickListener {
-            binding.sbRectPercent.progress = 75
+            binding.sbRectPercent.progress = INITIAL_RECT_RATIO
         }
     }
 

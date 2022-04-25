@@ -19,8 +19,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import xh.zero.R
 import xh.zero.utils.OrientationLiveData
 import xh.zero.widgets.BaseSurfaceView
+import xh.zero.widgets.IndicatorRectView
 import java.io.*
 import java.lang.RuntimeException
 import java.text.SimpleDateFormat
@@ -223,7 +225,10 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
                         style = Paint.Style.STROKE
                         color = Color.argb(255, 255, 0, 0)
                     }
+                    val rectTextPaint = IndicatorRectView.RectTextPaint(requireContext(), resources.getDimension(R.dimen.image_rect_text_size))
+                    rectTextPaint.setRect(rect)
                     canvas.drawRect(rect, paint)
+                    rectTextPaint.draw(rect, canvas)
                     canvas.setBitmap(bitmap)
                     val bos = ByteArrayOutputStream()
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)

@@ -16,16 +16,18 @@ class IndicatorRectView : View {
     private lateinit var paint: Paint
     private lateinit var textPaint: Paint
     private var rect: Rect? = null
-    private var leftTopPos: String = ""
-    private var leftTopRect = Rect()
+//    private var leftTopPos: String = ""
+//    private var leftTopRect = Rect()
+//
+//    private var leftBottomPos: String = ""
+//    private var leftBottomRect = Rect()
+//
+//    private var rightTopPos: String = ""
+//    private var rightTopRect = Rect()
+//    private var rightBottomPos: String = ""
+//    private var rightBottomRect = Rect()
 
-    private var leftBottomPos: String = ""
-    private var leftBottomRect = Rect()
-
-    private var rightTopPos: String = ""
-    private var rightTopRect = Rect()
-    private var rightBottomPos: String = ""
-    private var rightBottomRect = Rect()
+    private lateinit var rectTextPaint: RectTextPaint
 
     constructor(context: Context?) : super(context) {
         init()
@@ -44,14 +46,7 @@ class IndicatorRectView : View {
         paint.color = Color.RED
         paint.style = Paint.Style.STROKE
 
-        textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        textPaint.textSize = resources.getDimension(R.dimen.indicator_rect_text_size)
-//        textPaint.strokeWidth = STROKE_WIDTH
-//        paint.strokeJoin = Paint.Join.ROUND
-//        paint.strokeCap = Paint.Cap.ROUND
-//        paint.pathEffect = CornerPathEffect(10f)
-        textPaint.color = Color.RED
-//        textPaint.style = Paint.Style.STROKE
+        rectTextPaint = RectTextPaint(context)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -73,27 +68,57 @@ class IndicatorRectView : View {
     override fun onDraw(canvas: Canvas?) {
         if (rect != null) {
             canvas?.drawRect(rect!!, paint)
-
-            textPaint.getTextBounds(leftTopPos, 0, leftTopPos.length, leftTopRect)
-            canvas?.drawText(leftTopPos, rect!!.left.toFloat(), rect!!.top.toFloat() + leftTopRect.height(), textPaint)
-
-            textPaint.getTextBounds(leftBottomPos, 0, leftBottomPos.length, leftBottomRect)
-            canvas?.drawText(leftBottomPos, rect!!.left.toFloat(), rect!!.bottom.toFloat() - leftBottomRect.height(), textPaint)
-
-            textPaint.getTextBounds(rightTopPos, 0, rightTopPos.length, rightTopRect)
-            canvas?.drawText(rightTopPos, rect!!.right.toFloat() - rightTopRect.width(), rect!!.top.toFloat() + rightTopRect.height(), textPaint)
-
-            textPaint.getTextBounds(rightBottomPos, 0, rightBottomPos.length, rightBottomRect)
-            canvas?.drawText(rightBottomPos, rect!!.right.toFloat() - rightBottomRect.width(), rect!!.bottom.toFloat() - rightBottomRect.height(), textPaint)
+            rectTextPaint.draw(rect!!, canvas)
         }
     }
 
     fun drawRect(rect: Rect) {
         this.rect = rect
-        leftTopPos = "(${rect.left}, ${rect.top})"
-        leftBottomPos = "(${rect.left}, ${rect.bottom})"
-        rightTopPos = "(${rect.right}, ${rect.top})"
-        rightBottomPos = "(${rect.right}, ${rect.bottom})"
+        rectTextPaint.setRect(rect)
         postInvalidate()
+    }
+
+    class RectTextPaint(context: Context, textSize: Float = context.resources.getDimension(R.dimen.indicator_rect_text_size)) {
+        private var leftTopPos: String = ""
+        private var leftTopRect = Rect()
+        private var leftBottomPos: String = ""
+        private var leftBottomRect = Rect()
+        private var rightTopPos: String = ""
+        private var rightTopRect = Rect()
+        private var rightBottomPos: String = ""
+        private var rightBottomRect = Rect()
+
+        private val textPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        init {
+            textPaint.textSize = textSize
+//        textPaint.strokeWidth = STROKE_WIDTH
+//        paint.strokeJoin = Paint.Join.ROUND
+//        paint.strokeCap = Paint.Cap.ROUND
+//        paint.pathEffect = CornerPathEffect(10f)
+            textPaint.color = Color.RED
+//        textPaint.style = Paint.Style.STROKE
+        }
+
+        fun setRect(rect: Rect) {
+            leftTopPos = "(${rect.left}, ${rect.top})"
+            leftBottomPos = "(${rect.left}, ${rect.bottom})"
+            rightTopPos = "(${rect.right}, ${rect.top})"
+            rightBottomPos = "(${rect.right}, ${rect.bottom})"
+        }
+
+        fun draw(rect: Rect, canvas: Canvas?) {
+            textPaint.getTextBounds(leftTopPos, 0, leftTopPos.length, leftTopRect)
+            canvas?.drawText(leftTopPos, rect.left.toFloat(), rect.top.toFloat() + leftTopRect.height(), textPaint)
+
+            textPaint.getTextBounds(leftBottomPos, 0, leftBottomPos.length, leftBottomRect)
+            canvas?.drawText(leftBottomPos, rect.left.toFloat(), rect.bottom.toFloat() - leftBottomRect.height(), textPaint)
+
+            textPaint.getTextBounds(rightTopPos, 0, rightTopPos.length, rightTopRect)
+            canvas?.drawText(rightTopPos, rect.right.toFloat() - rightTopRect.width(), rect.top.toFloat() + rightTopRect.height(), textPaint)
+
+            textPaint.getTextBounds(rightBottomPos, 0, rightBottomPos.length, rightBottomRect)
+            canvas?.drawText(rightBottomPos, rect.right.toFloat() - rightBottomRect.width(), rect.bottom.toFloat() - rightBottomRect.height(), textPaint)
+        }
     }
 }

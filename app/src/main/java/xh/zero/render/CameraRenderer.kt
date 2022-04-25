@@ -24,7 +24,7 @@ class CameraRenderer(
 
     companion object {
         // 目前测试只有Nexus6p需要缩放修正预览
-        private const val SCALE_PREVIEW = true
+        private const val SCALE_PREVIEW = false
         // rk3568需要旋转，不需要缩放
         private const val IGNORE_PREVIEW_TRANSFORM = false
     }
