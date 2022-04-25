@@ -108,6 +108,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
             })
         }
 
+
     }
 
     private fun initializeCamera() = lifecycleScope.launch(Dispatchers.Main) {
@@ -401,6 +402,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
         private const val TAG = "CameraFragment"
         private const val ARG_CAMERA_ID = "ARG_CAMERA_ID"
 
+        // 摄像头输出的图片缓冲队列中一个缓冲区有3张图片
         private const val IMAGE_BUFFER_SIZE: Int = 3
 
         /** Helper data class used to hold capture metadata with their associated image */

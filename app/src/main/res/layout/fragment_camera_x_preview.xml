@@ -3,11 +3,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".camerax.CameraXFragment">
+    tools:context=".camerax.CameraXPreviewFragment">
 
     <xh.zero.render.CameraSurfaceView
         android:id="@+id/viewfinder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+
+    <View
+        android:id="@+id/focus_view"
+        android:layout_width="@dimen/camera_focus_view_size"
+        android:layout_height="@dimen/camera_focus_view_size"
+        android:visibility="invisible"
+        android:background="@drawable/shape_ring_focus"
+        />
+
+    <View
+        android:id="@+id/focus_view_circle"
+        android:layout_width="@dimen/camera_focus_view_size"
+        android:layout_height="@dimen/camera_focus_view_size"
+        android:visibility="invisible"
+        android:background="@drawable/shape_circle_focus"
+        />
 
 </FrameLayout>

@@ -9,11 +9,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.Surface
-import android.view.View
-import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.camera.camera2.interop.Camera2CameraInfo
@@ -102,6 +99,84 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
             Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
             displayId = getSurfaceView().display.displayId
             setupCamera()
+        }
+
+        // 手动对焦
+        getSurfaceView().setOnGestureDetect(object : GestureDetector.SimpleOnGestureListener() {
+            override fun onSingleTapUp(e: MotionEvent?): Boolean {
+                val x = e?.x ?: 0f
+                val y = e?.y ?: 0f
+
+                val factory: MeteringPointFactory = SurfaceOrientedMeteringPointFactory(
+                    getSurfaceView().width.toFloat(), getSurfaceView().height.toFloat()
+                )
+
+                val autoFocusPoint = factory.createPoint(x, y)
+                try {
+                    camera?.cameraControl?.startFocusAndMetering(
+                        FocusMeteringAction.Builder(
+                            autoFocusPoint,
+                            FocusMeteringAction.FLAG_AF
+                        ).apply {
+                            //focus only when the user tap the preview
+                            disableAutoCancel()
+
+                            animFocusView(binding.root.findViewById(R.id.focus_view), x, y, true)
+                            animFocusView(binding.root.findViewById(R.id.focus_view_circle), x, y, false)
+                        }.build()
+                    )
+                } catch (e: CameraInfoUnavailableException) {
+                    Log.d("ERROR", "cannot access camera", e)
+                }
+                return true
+            }
+        })
+    }
+
+    /**
+     * Focus view animation
+     */
+    private fun animFocusView(v: View, focusX: Float, focusY: Float, isRing: Boolean) {
+        v.visibility = View.VISIBLE
+        v.x = focusX - v.width / 2
+        v.y = focusY - v.height / 2
+
+        // 圆环和圆饼是不同的View，因此得到的ViewPropertyAnimator是不同的
+        val anim = v.animate()
+        anim.cancel()
+
+        if (isRing) {
+            // 圆环
+            v.scaleX = 1.6f
+            v.scaleY = 1.6f
+            v.alpha = 1f
+            anim.scaleX(1f)
+                .scaleY(1f)
+                .setDuration(300)
+                .withEndAction {
+                    v.animate()
+                        .alpha(0f)
+                        .setDuration(1000)
+                        .withEndAction { v.visibility = View.INVISIBLE }
+                        .start()
+                }
+                .start()
+        } else {
+            // 圆饼
+            v.scaleX = 0f
+            v.scaleY = 0f
+            v.alpha = 1f
+            anim.scaleX(1f)
+                .scaleY(1f)
+                .setDuration(300)
+                .withEndAction {
+                    v.animate()
+                        .alpha(0f)
+                        .setDuration(1000)
+                        .withEndAction { v.visibility = View.INVISIBLE }
+                        .start()
+                }
+                .start()
         }
     }
 
@@ -407,6 +482,7 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
         private const val RATIO_4_3_VALUE = 4.0 / 3.0
         private const val RATIO_16_9_VALUE = 16.0 / 9.0
 
+        private const val FOCUS_AREA_RADIUS = 400
 
         /** Helper function used to create a timestamped file */
         private fun createFile(baseFolder: File, format: String, extension: String) =
