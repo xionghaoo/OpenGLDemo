@@ -3,9 +3,13 @@ package xh.zero.view
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.*
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.media.MediaScannerConnection
 import android.net.Uri
+import android.opengl.GLES20
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -32,6 +36,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.math.max
@@ -51,6 +56,9 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
 //    private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
     private lateinit var windowManager: WindowManager
     private var camera: Camera? = null
+    private val cameraManager: CameraManager by lazy {
+        requireActivity().getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    }
 
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
@@ -69,6 +77,18 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
         arguments?.let {
 
         }
+    }
+
+    override fun onDestroy() {
+        cameraExecutor.apply {
+            shutdown()
+            awaitTermination(1000, TimeUnit.MILLISECONDS)
+        }
+        surfaceExecutor.apply {
+            shutdown()
+            awaitTermination(1000, TimeUnit.MILLISECONDS)
+        }
+        super.onDestroy()
     }
 
     override fun onCreateView(
@@ -95,8 +115,7 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
 
         getSurfaceView().setOnSurfaceCreated { sfTexture ->
             surfaceTexture = sfTexture
-            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
-            Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
+            setSurfaceBufferSize()
             displayId = getSurfaceView().display.displayId
             setupCamera()
         }
@@ -131,6 +150,39 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
                 return true
             }
         })
+    }
+
+    /**
+     * 设置纹理缓冲区大小，用来接收相机输出的图像帧缓冲。
+     * 相机的图像输出会根据设置的目标Surface来生成缓冲区
+     * 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
+     * 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
+     */
+    private fun setSurfaceBufferSize() {
+        val characteristic = cameraManager.getCameraCharacteristics(cameraId)
+        val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        configurationMap?.getOutputSizes(ImageFormat.JPEG)
+            ?.filter { size ->
+                // 尺寸要求不大于 GL_MAX_VIEWPORT_DIMS and GL_MAX_TEXTURE_SIZE
+                val limit = min(GLES20.GL_MAX_VIEWPORT_DIMS, GLES20.GL_MAX_TEXTURE_SIZE)
+                val isFitGLSize = size.width <= limit && size.height <= limit
+                val isPortrait = requireContext().resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                val isFitScreenSize = if (isPortrait) {
+                    size.width <= requireContext().resources.displayMetrics.widthPixels
+                } else {
+                    size.height <= requireContext().resources.displayMetrics.heightPixels
+                }
+                isFitGLSize && isFitScreenSize
+            }
+            ?.filter { size ->
+                // 寻找4:3的预览尺寸比例
+                abs(size.width / 4f - size.height / 3f) < 0.01f || abs(size.height / 4f - size.width / 3f) < 0.01f
+            }
+            ?.maxByOrNull { size -> size.height * size.width }
+            ?.also { maxBufferSize ->
+                surfaceTexture.setDefaultBufferSize(maxBufferSize.width, maxBufferSize.height)
+                Timber.d("纹理缓冲区尺寸：${maxBufferSize}")
+            }
     }
 
     /**

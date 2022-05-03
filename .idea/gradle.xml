@@ -10,7 +10,6 @@
         <option name="gradleJvm" value="11" />
         <option name="modules">
           <set>
-            <option value="$USER_HOME$/development/opencv_sdk_452" />
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
           </set>

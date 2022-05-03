@@ -2,10 +2,14 @@ package xh.zero.view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.*
 import android.hardware.camera2.*
 import android.media.Image
 import android.media.ImageReader
+import android.opengl.GLES20
+import android.opengl.GLES20.GL_MAX_TEXTURE_SIZE
+import android.opengl.GLES20.GL_MAX_VIEWPORT_DIMS
 import android.os.*
 import android.util.Log
 import android.view.*
@@ -32,6 +36,8 @@ import java.util.concurrent.TimeoutException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.math.abs
+import kotlin.math.min
 
 /**
  * Camera2相机
@@ -62,6 +68,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
     override fun onDestroy() {
         stopCamera()
         cameraThread.quitSafely()
+        imageReaderThread.quitSafely()
         super.onDestroy()
     }
 
@@ -79,25 +86,9 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        getSurfaceView().setOnSurfaceCreated {
-            surfaceTexture = it
-            // 设置缓冲区大小，用来接收相机输出的图像帧缓冲，这里的设置为Fragment的尺寸
-            // 相机的图像输出会根据设置的目标Surface来生成缓冲区
-            // 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
-            // 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
-
-            // TODO 最大预览画面，rk3568用这个
-//            val characteristic = cameraManager.getCameraCharacteristics(cameraId)
-//            val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-//            configurationMap?.getOutputSizes(ImageFormat.JPEG)
-//                ?.maxByOrNull { it.height * it.width }
-//                ?.also { maxCameraSize ->
-//                    surfaceTexture.setDefaultBufferSize(maxCameraSize.width, maxCameraSize.height)
-//                }
-
-            // TODO 正常的摄像头用这个
-            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
-            Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
+        getSurfaceView().setOnSurfaceCreated { sf ->
+            surfaceTexture = sf
+            setSurfaceBufferSize()
             initializeCamera()
         }
 
@@ -107,8 +98,39 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : Fragment() {
                 Log.d(TAG, "Orientation changed: $orientation")
             })
         }
+    }
 
-
+    /**
+     * 设置纹理缓冲区大小，用来接收相机输出的图像帧缓冲。
+     * 相机的图像输出会根据设置的目标Surface来生成缓冲区
+     * 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
+     * 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
+     */
+    private fun setSurfaceBufferSize() {
+        val characteristic = cameraManager.getCameraCharacteristics(cameraId)
+        val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        configurationMap?.getOutputSizes(ImageFormat.JPEG)
+            ?.filter { size ->
+                // 尺寸要求不大于 GL_MAX_VIEWPORT_DIMS and GL_MAX_TEXTURE_SIZE
+                val limit = min(GLES20.GL_MAX_VIEWPORT_DIMS, GLES20.GL_MAX_TEXTURE_SIZE)
+                val isFitGLSize = size.width <= limit && size.height <= limit
+                val isPortrait = requireContext().resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                val isFitScreenSize = if (isPortrait) {
+                    size.width <= requireContext().resources.displayMetrics.widthPixels
+                } else {
+                    size.height <= requireContext().resources.displayMetrics.heightPixels
+                }
+                isFitGLSize && isFitScreenSize
+            }
+            ?.filter { size ->
+                // 寻找4:3的预览尺寸比例
+                abs(size.width / 4f - size.height / 3f) < 0.01f || abs(size.height / 4f - size.width / 3f) < 0.01f
+            }
+            ?.maxByOrNull { size -> size.height * size.width }
+            ?.also { maxBufferSize ->
+                surfaceTexture.setDefaultBufferSize(maxBufferSize.width, maxBufferSize.height)
+                Timber.d("纹理缓冲区尺寸：${maxBufferSize}")
+            }
     }
 
     private fun initializeCamera() = lifecycleScope.launch(Dispatchers.Main) {

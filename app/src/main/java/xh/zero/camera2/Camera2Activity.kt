@@ -59,25 +59,32 @@ class Camera2Activity : AppCompatActivity() {
             }
         }
 
-        binding.sbRectPercent.progress = INITIAL_RECT_RATIO
-        binding.tvRectPercent.text = "${INITIAL_RECT_RATIO}%"
-        binding.sbRectPercent.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                initialIndicatorRect(progress)
-                binding.tvRectPercent.text = "${progress}%"
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-
-            }
-        })
-
-        binding.btnResetRect.setOnClickListener {
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            binding.sbRectPercent.visibility = View.GONE
+            binding.tvRectPercent.visibility = View.GONE
+            binding.btnResetRect.visibility = View.GONE
+        } else {
             binding.sbRectPercent.progress = INITIAL_RECT_RATIO
+            binding.tvRectPercent.text = "${INITIAL_RECT_RATIO}%"
+            binding.sbRectPercent.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    initialIndicatorRect(progress)
+                    binding.tvRectPercent.text = "${progress}%"
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+
+                }
+            })
+
+            binding.btnResetRect.setOnClickListener {
+                binding.sbRectPercent.progress = INITIAL_RECT_RATIO
+            }
         }
+
     }
 
     private fun initialCameraView() {

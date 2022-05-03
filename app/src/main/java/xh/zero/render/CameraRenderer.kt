@@ -1,11 +1,8 @@
 package xh.zero.render
 
 import android.content.Context
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraManager
-import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
@@ -17,6 +14,10 @@ import xh.zero.widgets.OnTextureCreated
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+enum class TransformType{
+    NONE, ROTATE_AND_SCALE, ROTATE
+}
+
 class CameraRenderer(
     private val context: Context,
     private var listener: OnViewSizeAvailableListener
@@ -24,7 +25,7 @@ class CameraRenderer(
 
     companion object {
         // 目前测试只有Nexus6p需要缩放修正预览
-        private const val SCALE_PREVIEW = false
+        private const val SCALE_PREVIEW = true
         // rk3568需要旋转，不需要缩放
         private const val IGNORE_PREVIEW_TRANSFORM = false
     }
@@ -99,7 +100,7 @@ class CameraRenderer(
         aTextureCoord = shaderProgram.getAttribute("aCoord")
 
         // 根据摄像头本身的角度不同，这个旋转可能不需要
-        initialHorizontalAdjustMatrix(needScale = SCALE_PREVIEW, ignore = IGNORE_PREVIEW_TRANSFORM)
+        initialTransformMatrix(TransformType.ROTATE)
 
         externalTextureID = OpenGLUtil.createExternalTexture()
         // 创建一个接收相机预览的texture
@@ -171,24 +172,30 @@ class CameraRenderer(
      * needScale: 是否需要缩放矩阵
      * ignore: 是否忽略矫正行为
      */
-    private fun initialHorizontalAdjustMatrix(needScale: Boolean, ignore: Boolean) {
-        if (context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT || ignore) {
+    private fun initialTransformMatrix(type: TransformType) {
+        val isPortrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+        val isNeedScale = type == TransformType.ROTATE_AND_SCALE
+        val ignoreTransform = type == TransformType.NONE
+        if (isPortrait || ignoreTransform) {
+            // 竖屏不需要形变
             Matrix.setIdentityM(horizontalAdjustMatrix, 0)
         } else {
             // 横屏，width > height
             // 缩放矩阵
-//            val scale: Float = listener.getViewSize().width.toFloat() / listener.getViewSize().height
-            val scale: Float = listener.getViewSize().height.toFloat() / listener.getViewSize().width
-            Timber.d("是否缩放：${needScale}，缩放比例：${scale}")
+            val scale: Float = listener.getViewSize().height.toFloat() / listener.getViewSize().width.toFloat()
+            Timber.d("缩放比例：${scale}")
             val scaleMatrix = FloatArray(16)
             // 生成单位矩阵
             Matrix.setIdentityM(scaleMatrix, 0)
-            // 由于缩放以后需要旋转90度，
-            // 这里缩放水平方向时，修改y的值，修改竖直方向时，修改x的值，这里水平和竖直相对于此时屏幕的方向
-            Matrix.scaleM(scaleMatrix, 0, if (needScale) scale else 1f, 1f, 1f)
+            // 由于缩放以后需要逆时针旋转90度，因此这里x和y的缩放方向是旋转前预览的水平和竖直方向，
+            // 旋转前的预览画面是顺时针旋转90的，因此:
+            // 缩放预览的宽度方向：修改y的值
+            // 缩放预览的高度方向：修改x的值
+            Matrix.scaleM(scaleMatrix, 0, if (isNeedScale) scale else 1f, 1f, 1f)
 
             val rotateMatrix = FloatArray(16)
-            // 矩阵屏幕朝里方向顺时针旋转90度，相当于画面逆时针旋转90度
+            // 正常相机的后置镜头角度为顺时针90度
+            // 修正矩阵：矩阵屏幕朝里方向顺时针旋转90度，相当于画面逆时针旋转90度
             Matrix.setRotateM(rotateMatrix, 0, 90f, 0f, 0f, 1f)
             // 矩阵乘顺序：从右到左，缩放 -> 旋转 -> 平移
             Matrix.multiplyMM(horizontalAdjustMatrix, 0, rotateMatrix, 0, scaleMatrix, 0)

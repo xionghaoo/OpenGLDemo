@@ -14,5 +14,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "OpenGLDemo"
-include ':app', ':opencv_sdk_452'
-project(':opencv_sdk_452').projectDir = new File(settingsDir, '../../../development/opencv_sdk_452')
+include ':app'
