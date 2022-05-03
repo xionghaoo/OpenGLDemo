@@ -15,6 +15,10 @@ class CameraInputFilter(
     private var listener: OnViewSizeAvailableListener
 ) : GpuImageFilter(context, vertexShaderCode, fragmentShaderCode) {
 
+    enum class TransformType{
+        NONE, ROTATE_AND_SCALE, ROTATE
+    }
+
     companion object {
         /**
          * GLSL程序，GPU程序段
@@ -58,13 +62,15 @@ class CameraInputFilter(
         this.onTextureCreated = callback
     }
 
+    fun getParentSize() = listener.getViewSize()
+
     override fun onCreate() {
         externalTextureID = OpenGLUtil.createExternalTexture()
         // 创建一个接收相机预览的texture
         surfaceTexture = SurfaceTexture(externalTextureID)
         onTextureCreated?.invoke(surfaceTexture)
 
-        initialHorizontalAdjustMatrix(needScale = false, ignore = true)
+        initialTransformMatrix(TransformType.ROTATE)
     }
 
     override fun onDraw(fboTextureId: Int) {
@@ -87,20 +93,30 @@ class CameraInputFilter(
 
     }
 
-    private fun initialHorizontalAdjustMatrix(needScale: Boolean, ignore: Boolean) {
-        if (context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT || ignore) {
+    private fun initialTransformMatrix(type: TransformType) {
+        val isPortrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+        val isNeedScale = type == TransformType.ROTATE_AND_SCALE
+        val ignoreTransform = type == TransformType.NONE
+        if (isPortrait || ignoreTransform) {
+            // 竖屏不需要形变
             Matrix.setIdentityM(horizontalAdjustMatrix, 0)
         } else {
+            // 横屏，width > height
             // 缩放矩阵
-            val scale: Float = listener.getViewSize().width.toFloat() / listener.getViewSize().height
-            Timber.d("是否缩放：${needScale}，缩放比例：${scale}")
+            val scale: Float = listener.getViewSize().height.toFloat() / listener.getViewSize().width.toFloat()
+            Timber.d("缩放比例：${scale}")
             val scaleMatrix = FloatArray(16)
             // 生成单位矩阵
             Matrix.setIdentityM(scaleMatrix, 0)
-            Matrix.scaleM(scaleMatrix, 0, 1f, if (needScale) scale else 1f, 1f)
+            // 由于缩放以后需要逆时针旋转90度，因此这里x和y的缩放方向是旋转前预览的水平和竖直方向，
+            // 旋转前的预览画面是顺时针旋转90的，因此:
+            // 缩放预览的宽度方向：修改y的值
+            // 缩放预览的高度方向：修改x的值
+            Matrix.scaleM(scaleMatrix, 0, if (isNeedScale) scale else 1f, 1f, 1f)
 
             val rotateMatrix = FloatArray(16)
-            // 矩阵屏幕朝里方向顺时针旋转90度，相当于画面逆时针旋转90度
+            // 正常相机的后置镜头角度为顺时针90度
+            // 修正矩阵：矩阵屏幕朝里方向顺时针旋转90度，相当于画面逆时针旋转90度
             Matrix.setRotateM(rotateMatrix, 0, 90f, 0f, 0f, 1f)
             // 矩阵乘顺序：从右到左，缩放 -> 旋转 -> 平移
             Matrix.multiplyMM(horizontalAdjustMatrix, 0, rotateMatrix, 0, scaleMatrix, 0)

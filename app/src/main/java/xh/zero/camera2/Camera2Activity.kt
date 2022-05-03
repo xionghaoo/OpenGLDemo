@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.util.Size
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.SeekBar
 import androidx.window.WindowManager
@@ -20,15 +21,17 @@ import xh.zero.R
 import xh.zero.core.replaceFragment
 import xh.zero.core.utils.SystemUtil
 import xh.zero.databinding.ActivityCamera2Binding
+import xh.zero.view.BaseCameraActivity
+import xh.zero.view.BaseCameraFragment
 
-class Camera2Activity : AppCompatActivity() {
+class Camera2Activity : BaseCameraActivity<ActivityCamera2Binding>() {
 
     companion object {
         private const val INITIAL_RECT_RATIO = 70
     }
 
-    private lateinit var binding: ActivityCamera2Binding
-    private var isInit = true
+//    private lateinit var binding: ActivityCamera2Binding
+//    private var isInit = true
     private lateinit var fragment: Camera2PreviewFragment
 
     private var screenSize: Size? = null
@@ -42,16 +45,12 @@ class Camera2Activity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        SystemUtil.toFullScreenMode(this)
-        binding = ActivityCamera2Binding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        binding.root.viewTreeObserver.addOnGlobalLayoutListener {
-            if (isInit) {
-                isInit = false
-                initialCameraView()
-            }
-        }
+//        binding.root.viewTreeObserver.addOnGlobalLayoutListener {
+//            if (isInit) {
+//                isInit = false
+//                initialCameraView()
+//            }
+//        }
 
         binding.btnCapture.setOnClickListener {
             fragment.takePicture(imgRect, true) { imgPath ->
@@ -87,60 +86,79 @@ class Camera2Activity : AppCompatActivity() {
 
     }
 
-    private fun initialCameraView() {
-        val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        cameraManager.cameraIdList.forEachIndexed { index, cameraId ->
-            val characteristic = cameraManager.getCameraCharacteristics(cameraId)
-            // 打开第一个摄像头
-            if (index == 0) {
-                val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-                configurationMap?.getOutputSizes(ImageFormat.JPEG)
-                    ?.maxByOrNull { it.height * it.width }
-                    ?.also { maxImageSize ->
-                        // Nexus6P相机支持的最大尺寸：4032x3024
-                        Timber.d("相机支持的最大尺寸：${maxImageSize}")
-                        val metrics = WindowManager(this).getCurrentWindowMetrics().bounds
-                        // Nexus6P屏幕尺寸：1440 x 2560，包含NavigationBar的高度
-                        Timber.d("屏幕尺寸：${metrics.width()} x ${metrics.height()}")
-                        val lp = binding.fragmentContainer.layoutParams as FrameLayout.LayoutParams
+    override fun getBindingView(): ActivityCamera2Binding = ActivityCamera2Binding.inflate(layoutInflater)
 
-                        Timber.d("屏幕方向: ${if (resources.configuration.orientation == 1) "竖直" else "水平"}")
-                        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                            // 竖直方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
-                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
-                            lp.width = metrics.width()
-                            // Nexus6P 竖直方向屏幕计算高度
-                            // 等比例关系：1440 / height = 3024 / 4032
-                            // height = 4032 / 3024 * 1440
-                            lp.height = (metrics.width() / ratio).toInt()
-                        } else {
-                            // 水平方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
-                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
-                            // Nexus6P 竖直方向屏幕计算高度
-                            // 等比例关系：width / 1440 = 4032 / 3024
-                            // width = 4032 / 3024 * 1440
-                            lp.width = (metrics.height() / ratio).toInt()
-                            lp.height = metrics.height()
+    override fun getCameraFragmentLayout(): ViewGroup = binding.fragmentContainer
 
-                            viewW = lp.width
-                            viewH = lp.height
-                            imageW = maxImageSize.width
-                            imageH = maxImageSize.height
-                            screenSize = Size(metrics.width(), metrics.height())
-                            // 只在水平方向加
-                            initialIndicatorRect(binding.sbRectPercent.progress)
-                        }
-                        lp.gravity = Gravity.CENTER
-                        fragment = Camera2PreviewFragment.newInstance(cameraId)
-                        replaceFragment(fragment, R.id.fragment_container)
-                    }
-
-                characteristic.get(CameraCharacteristics.SENSOR_ORIENTATION)?.let { orientation ->
-                    Timber.d("摄像头方向：${orientation}")
-                }
-            }
+    override fun onCameraAreaCreated(cameraId: String, area: Size, screen: Size, supportImage: Size) {
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            viewW = area.width
+            viewH = area.height
+            imageW = supportImage.width
+            imageH = supportImage.height
+            screenSize = Size(screen.width, screen.height)
+            // 只在水平方向加
+            initialIndicatorRect(binding.sbRectPercent.progress)
         }
+
+        fragment = Camera2PreviewFragment.newInstance(cameraId)
+        replaceFragment(fragment, R.id.fragment_container)
     }
+
+//    private fun initialCameraView() {
+//        val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+//        cameraManager.cameraIdList.forEachIndexed { index, cameraId ->
+//            val characteristic = cameraManager.getCameraCharacteristics(cameraId)
+//            // 打开第一个摄像头
+//            if (index == 0) {
+//                val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+//                configurationMap?.getOutputSizes(ImageFormat.JPEG)
+//                    ?.maxByOrNull { it.height * it.width }
+//                    ?.also { maxImageSize ->
+//                        // Nexus6P相机支持的最大尺寸：4032x3024
+//                        Timber.d("相机支持的最大尺寸：${maxImageSize}")
+//                        val metrics = WindowManager(this).getCurrentWindowMetrics().bounds
+//                        // Nexus6P屏幕尺寸：1440 x 2560，包含NavigationBar的高度
+//                        Timber.d("屏幕尺寸：${metrics.width()} x ${metrics.height()}")
+//                        val lp = binding.fragmentContainer.layoutParams as FrameLayout.LayoutParams
+//
+//                        Timber.d("屏幕方向: ${if (resources.configuration.orientation == 1) "竖直" else "水平"}")
+//                        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+//                            // 竖直方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
+//                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
+//                            lp.width = metrics.width()
+//                            // Nexus6P 竖直方向屏幕计算高度
+//                            // 等比例关系：1440 / height = 3024 / 4032
+//                            // height = 4032 / 3024 * 1440
+//                            lp.height = (metrics.width() / ratio).toInt()
+//                        } else {
+//                            // 水平方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
+//                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
+//                            // Nexus6P 竖直方向屏幕计算高度
+//                            // 等比例关系：width / 1440 = 4032 / 3024
+//                            // width = 4032 / 3024 * 1440
+//                            lp.width = (metrics.height() / ratio).toInt()
+//                            lp.height = metrics.height()
+//
+//                            viewW = lp.width
+//                            viewH = lp.height
+//                            imageW = maxImageSize.width
+//                            imageH = maxImageSize.height
+//                            screenSize = Size(metrics.width(), metrics.height())
+//                            // 只在水平方向加
+//                            initialIndicatorRect(binding.sbRectPercent.progress)
+//                        }
+//                        lp.gravity = Gravity.CENTER
+//                        fragment = Camera2PreviewFragment.newInstance(cameraId)
+//                        replaceFragment(fragment, R.id.fragment_container)
+//                    }
+//
+//                characteristic.get(CameraCharacteristics.SENSOR_ORIENTATION)?.let { orientation ->
+//                    Timber.d("摄像头方向：${orientation}")
+//                }
+//            }
+//        }
+//    }
 
     /**
      * 给预览和成像加上指示器矩形

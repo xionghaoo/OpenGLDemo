@@ -13,7 +13,7 @@ class FilterChainFragment : Camera2Fragment<FragmentFilterChainBinding>() {
         arguments?.getString("cameraId") ?: "0"
     }
 
-    override fun getViewBinding(
+    override fun getBindingView(
         inflater: LayoutInflater,
         container: ViewGroup?
     ): FragmentFilterChainBinding {

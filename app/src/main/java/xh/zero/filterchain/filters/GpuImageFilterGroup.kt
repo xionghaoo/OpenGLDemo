@@ -3,12 +3,13 @@ package xh.zero.filterchain.filters
 import android.content.Context
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
+import android.util.Size
 import timber.log.Timber
 import xh.zero.filterchain.FrameBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class GpuImageFilterGroup(private val context: Context): GLSurfaceView.Renderer {
+class GpuImageFilterGroup : GLSurfaceView.Renderer {
 
     private val filters = ArrayList<GpuImageFilter>()
     private lateinit var frameBuffer: FrameBuffer
@@ -18,9 +19,11 @@ class GpuImageFilterGroup(private val context: Context): GLSurfaceView.Renderer 
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        val display = context.resources.displayMetrics
-        frameBuffer = FrameBuffer(display.widthPixels, display.heightPixels)
         filters.forEach { filter ->
+            if (filter is CameraInputFilter) {
+                // 设置预览绘制缓冲区大小，这里设置和SurfaceView的大小一致
+                frameBuffer = FrameBuffer(filter.getParentSize().width, filter.getParentSize().height)
+            }
             filter.onSurfaceCreated()
         }
 

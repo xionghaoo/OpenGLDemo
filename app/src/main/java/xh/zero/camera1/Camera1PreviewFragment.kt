@@ -9,9 +9,9 @@ import xh.zero.widgets.BaseSurfaceView
 
 class Camera1PreviewFragment : Camera1Fragment<FragmentCamera1PreviewBinding>() {
 
-    override val cameraId: Int by lazy { arguments?.getInt(ARG_CAMERA_ID) ?: 0 }
+    override val cameraId: String by lazy { (arguments?.getInt(ARG_CAMERA_ID) ?: 0).toString() }
 
-    override fun surfaceView(): BaseSurfaceView = binding.viewfinder
+    override fun getSurfaceView(): BaseSurfaceView = binding.viewfinder
 
     override fun getBindingView(
         inflater: LayoutInflater,

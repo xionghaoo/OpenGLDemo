@@ -21,7 +21,7 @@ class FilterSurfaceView : BaseSurfaceView, CameraInputFilter.OnViewSizeAvailable
 
     init {
         setEGLContextClientVersion(2)
-        renderer = GpuImageFilterGroup(context)
+        renderer = GpuImageFilterGroup()
         cameraInput = CameraInputFilter(context, this)
         renderer.addFilter(cameraInput)
         renderer.addFilter(CustomImageFilter(context))

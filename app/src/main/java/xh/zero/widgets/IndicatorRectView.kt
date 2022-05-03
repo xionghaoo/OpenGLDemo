@@ -16,16 +16,6 @@ class IndicatorRectView : View {
     private lateinit var paint: Paint
     private lateinit var textPaint: Paint
     private var rect: Rect? = null
-//    private var leftTopPos: String = ""
-//    private var leftTopRect = Rect()
-//
-//    private var leftBottomPos: String = ""
-//    private var leftBottomRect = Rect()
-//
-//    private var rightTopPos: String = ""
-//    private var rightTopRect = Rect()
-//    private var rightBottomPos: String = ""
-//    private var rightBottomRect = Rect()
 
     private lateinit var rectTextPaint: RectTextPaint
 

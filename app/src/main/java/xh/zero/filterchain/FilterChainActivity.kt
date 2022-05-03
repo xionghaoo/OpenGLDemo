@@ -4,24 +4,29 @@ import android.content.Context
 import android.hardware.camera2.CameraManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Size
+import android.view.ViewGroup
 import xh.zero.R
 import xh.zero.core.replaceFragment
 import xh.zero.core.utils.SystemUtil
+import xh.zero.databinding.ActivityFilterChainBinding
+import xh.zero.view.BaseCameraActivity
 
 /**
  * 过滤器链
  */
-class FilterChainActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        SystemUtil.toFullScreenMode(this)
-        setContentView(R.layout.activity_filter_chain)
-        val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        cameraManager.cameraIdList.forEachIndexed { index, cameraId ->
-            if (index == 0) {
-                replaceFragment(FilterChainFragment.newInstance(cameraId), R.id.fragment_container)
-            }
-        }
+class FilterChainActivity : BaseCameraActivity<ActivityFilterChainBinding>() {
 
+    override fun getBindingView(): ActivityFilterChainBinding = ActivityFilterChainBinding.inflate(layoutInflater)
+
+    override fun getCameraFragmentLayout(): ViewGroup = binding.fragmentContainer
+
+    override fun onCameraAreaCreated(
+        cameraId: String,
+        area: Size,
+        screen: Size,
+        supportImage: Size
+    ) {
+        replaceFragment(FilterChainFragment.newInstance(cameraId), R.id.fragment_container)
     }
 }

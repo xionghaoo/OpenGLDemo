@@ -15,7 +15,7 @@ class SilentCaptureFragment : Camera2SilentFragment<FragmentSilentCaptureBinding
         arguments?.getString("cameraId") ?: "0"
     }
 
-    override fun getViewBinding(
+    override fun getBindingView(
         inflater: LayoutInflater,
         container: ViewGroup?
     ): FragmentSilentCaptureBinding {

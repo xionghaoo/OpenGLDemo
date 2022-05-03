@@ -12,8 +12,7 @@ class Camera2PreviewFragment: Camera2Fragment<FragmentCamera2PreviewBinding>() {
         arguments?.getString("id") ?: "0"
     }
 
-
-    override fun getViewBinding(
+    override fun getBindingView(
         inflater: LayoutInflater,
         container: ViewGroup?
     ): FragmentCamera2PreviewBinding {

@@ -11,7 +11,7 @@ class CameraXPreviewFragment : CameraXFragment<FragmentCameraXPreviewBinding>() 
 
     override val cameraId: String by lazy { arguments?.getString("cameraId") ?: "0" }
 
-    override fun getViewBinding(
+    override fun getBindingView(
         inflater: LayoutInflater,
         container: ViewGroup?
     ): FragmentCameraXPreviewBinding {

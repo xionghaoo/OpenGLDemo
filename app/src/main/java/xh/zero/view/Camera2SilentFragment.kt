@@ -22,7 +22,9 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import xh.zero.core.utils.ToastUtil
 import xh.zero.utils.OrientationLiveData
+import xh.zero.widgets.BaseSurfaceView
 import java.io.*
+import java.lang.IllegalArgumentException
 import java.lang.RuntimeException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,16 +37,12 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * Camera2无预览相机
  */
-abstract class Camera2SilentFragment<VIEW: ViewBinding> : Fragment() {
+abstract class Camera2SilentFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
 
-    protected lateinit var binding: VIEW
-    protected abstract val cameraId: String
 
     private lateinit var camera: CameraDevice
     private lateinit var session: CameraCaptureSession
-    private val cameraManager: CameraManager by lazy {
-        requireActivity().getSystemService(Context.CAMERA_SERVICE) as CameraManager
-    }
+
     private val cameraThread = HandlerThread("CameraThread").apply { start() }
     private val cameraHandler = Handler(cameraThread.looper)
     private lateinit var imageReader: ImageReader
@@ -64,33 +62,9 @@ abstract class Camera2SilentFragment<VIEW: ViewBinding> : Fragment() {
         super.onDestroy()
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        binding = getViewBinding(inflater, container)
-        return binding.root
-    }
-
-    abstract fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): VIEW
-
-//    abstract fun getSurfaceView(): BaseSurfaceView
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-//        getSurfaceView().setOnSurfaceCreated {
-//            surfaceTexture = it
-//            // 设置缓冲区大小，用来接收相机输出的图像帧缓冲，这里的设置为Fragment的尺寸
-//            // 相机的图像输出会根据设置的目标Surface来生成缓冲区
-//            // 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
-//            // 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
-//            surfaceTexture.setDefaultBufferSize(getSurfaceView().width, getSurfaceView().height)
-//            Timber.d("纹理缓冲区尺寸：${getSurfaceView().width} x ${getSurfaceView().height}")
-//            initializeCamera()
-//        }
-
         initializeCamera()
-
         // Used to rotate the output media to match device orientation
         relativeOrientation = OrientationLiveData(requireContext(), characteristics).apply {
             observe(viewLifecycleOwner, Observer { orientation ->
@@ -98,6 +72,10 @@ abstract class Camera2SilentFragment<VIEW: ViewBinding> : Fragment() {
             })
         }
 
+    }
+
+    override fun getSurfaceView(): BaseSurfaceView {
+        throw IllegalStateException("无预览相机不应该提供SurfaceView")
     }
 
     private fun initializeCamera() = lifecycleScope.launch(Dispatchers.Main) {

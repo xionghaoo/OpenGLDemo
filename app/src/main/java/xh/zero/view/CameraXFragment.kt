@@ -45,20 +45,13 @@ import kotlin.math.min
 /**
  * CameraX相机
  */
-abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
-
-    protected lateinit var binding: VIEW
-
-    protected abstract val cameraId: String
+abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
 
     private var displayId: Int = -1
     private var cameraProvider: ProcessCameraProvider? = null
 //    private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
     private lateinit var windowManager: WindowManager
     private var camera: Camera? = null
-    private val cameraManager: CameraManager by lazy {
-        requireActivity().getSystemService(Context.CAMERA_SERVICE) as CameraManager
-    }
 
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
@@ -72,13 +65,6 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
 
     private lateinit var surfaceTexture: SurfaceTexture
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-
-        }
-    }
-
     override fun onDestroy() {
         cameraExecutor.apply {
             shutdown()
@@ -90,18 +76,6 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
         }
         super.onDestroy()
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        binding = getViewBinding(inflater, container)
-        return binding.root
-    }
-
-    abstract fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): VIEW
-
-    abstract fun getSurfaceView(): BaseSurfaceView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -115,7 +89,7 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
 
         getSurfaceView().setOnSurfaceCreated { sfTexture ->
             surfaceTexture = sfTexture
-            setSurfaceBufferSize()
+            setSurfaceBufferSize(surfaceTexture)
             displayId = getSurfaceView().display.displayId
             setupCamera()
         }
@@ -150,39 +124,6 @@ abstract class CameraXFragment<VIEW: ViewBinding> : Fragment() {
                 return true
             }
         })
-    }
-
-    /**
-     * 设置纹理缓冲区大小，用来接收相机输出的图像帧缓冲。
-     * 相机的图像输出会根据设置的目标Surface来生成缓冲区
-     * 如果相机输出的缓冲区和我们设置的Surface buffer size尺寸不一致，那么输出到Surface时的图像就会变形
-     * 如果我们Surface buffer size的尺寸和SurfaceView的尺寸不一致，那么输出的图像也会变形
-     */
-    private fun setSurfaceBufferSize() {
-        val characteristic = cameraManager.getCameraCharacteristics(cameraId)
-        val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-        configurationMap?.getOutputSizes(ImageFormat.JPEG)
-            ?.filter { size ->
-                // 尺寸要求不大于 GL_MAX_VIEWPORT_DIMS and GL_MAX_TEXTURE_SIZE
-                val limit = min(GLES20.GL_MAX_VIEWPORT_DIMS, GLES20.GL_MAX_TEXTURE_SIZE)
-                val isFitGLSize = size.width <= limit && size.height <= limit
-                val isPortrait = requireContext().resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                val isFitScreenSize = if (isPortrait) {
-                    size.width <= requireContext().resources.displayMetrics.widthPixels
-                } else {
-                    size.height <= requireContext().resources.displayMetrics.heightPixels
-                }
-                isFitGLSize && isFitScreenSize
-            }
-            ?.filter { size ->
-                // 寻找4:3的预览尺寸比例
-                abs(size.width / 4f - size.height / 3f) < 0.01f || abs(size.height / 4f - size.width / 3f) < 0.01f
-            }
-            ?.maxByOrNull { size -> size.height * size.width }
-            ?.also { maxBufferSize ->
-                surfaceTexture.setDefaultBufferSize(maxBufferSize.width, maxBufferSize.height)
-                Timber.d("纹理缓冲区尺寸：${maxBufferSize}")
-            }
     }
 
     /**
