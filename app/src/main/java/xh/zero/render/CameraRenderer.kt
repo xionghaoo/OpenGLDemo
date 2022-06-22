@@ -23,13 +23,6 @@ class CameraRenderer(
     private var listener: OnViewSizeAvailableListener
 ) : GLSurfaceView.Renderer {
 
-    companion object {
-        // 目前测试只有Nexus6p需要缩放修正预览
-        private const val SCALE_PREVIEW = true
-        // rk3568需要旋转，不需要缩放
-        private const val IGNORE_PREVIEW_TRANSFORM = false
-    }
-
     /**
      * GLSL程序，GPU程序段
      * 顶点着色器
@@ -100,7 +93,7 @@ class CameraRenderer(
         aTextureCoord = shaderProgram.getAttribute("aCoord")
 
         // 根据摄像头本身的角度不同，这个旋转可能不需要
-        initialTransformMatrix(TransformType.ROTATE)
+        initialTransformMatrix(TransformType.NONE)
 
         externalTextureID = OpenGLUtil.createExternalTexture()
         // 创建一个接收相机预览的texture

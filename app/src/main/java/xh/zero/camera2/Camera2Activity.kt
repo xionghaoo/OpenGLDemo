@@ -27,11 +27,13 @@ import xh.zero.view.BaseCameraFragment
 class Camera2Activity : BaseCameraActivity<ActivityCamera2Binding>() {
 
     companion object {
-        private const val INITIAL_RECT_RATIO = 70
+        private const val INITIAL_RECT_RATIO = 65
     }
 
-//    private lateinit var binding: ActivityCamera2Binding
-//    private var isInit = true
+    enum class RectPos {
+        CENTER, BOTTOM
+    }
+
     private lateinit var fragment: Camera2PreviewFragment
 
     private var screenSize: Size? = null
@@ -43,14 +45,10 @@ class Camera2Activity : BaseCameraActivity<ActivityCamera2Binding>() {
     private val imgRect = Rect()
     private val viewRect = Rect()
 
+    private var rectPos: RectPos = RectPos.CENTER
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        binding.root.viewTreeObserver.addOnGlobalLayoutListener {
-//            if (isInit) {
-//                isInit = false
-//                initialCameraView()
-//            }
-//        }
 
         binding.btnCapture.setOnClickListener {
             fragment.takePicture(imgRect, true) { imgPath ->
@@ -67,7 +65,7 @@ class Camera2Activity : BaseCameraActivity<ActivityCamera2Binding>() {
             binding.tvRectPercent.text = "${INITIAL_RECT_RATIO}%"
             binding.sbRectPercent.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    initialIndicatorRect(progress)
+                    initialIndicatorRect(progress, rectPos)
                     binding.tvRectPercent.text = "${progress}%"
                 }
 
@@ -98,72 +96,17 @@ class Camera2Activity : BaseCameraActivity<ActivityCamera2Binding>() {
             imageH = supportImage.height
             screenSize = Size(screen.width, screen.height)
             // 只在水平方向加
-            initialIndicatorRect(binding.sbRectPercent.progress)
+            initialIndicatorRect(binding.sbRectPercent.progress, rectPos)
         }
 
         fragment = Camera2PreviewFragment.newInstance(cameraId)
         replaceFragment(fragment, R.id.fragment_container)
     }
 
-//    private fun initialCameraView() {
-//        val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-//        cameraManager.cameraIdList.forEachIndexed { index, cameraId ->
-//            val characteristic = cameraManager.getCameraCharacteristics(cameraId)
-//            // 打开第一个摄像头
-//            if (index == 0) {
-//                val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-//                configurationMap?.getOutputSizes(ImageFormat.JPEG)
-//                    ?.maxByOrNull { it.height * it.width }
-//                    ?.also { maxImageSize ->
-//                        // Nexus6P相机支持的最大尺寸：4032x3024
-//                        Timber.d("相机支持的最大尺寸：${maxImageSize}")
-//                        val metrics = WindowManager(this).getCurrentWindowMetrics().bounds
-//                        // Nexus6P屏幕尺寸：1440 x 2560，包含NavigationBar的高度
-//                        Timber.d("屏幕尺寸：${metrics.width()} x ${metrics.height()}")
-//                        val lp = binding.fragmentContainer.layoutParams as FrameLayout.LayoutParams
-//
-//                        Timber.d("屏幕方向: ${if (resources.configuration.orientation == 1) "竖直" else "水平"}")
-//                        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-//                            // 竖直方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
-//                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
-//                            lp.width = metrics.width()
-//                            // Nexus6P 竖直方向屏幕计算高度
-//                            // 等比例关系：1440 / height = 3024 / 4032
-//                            // height = 4032 / 3024 * 1440
-//                            lp.height = (metrics.width() / ratio).toInt()
-//                        } else {
-//                            // 水平方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
-//                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
-//                            // Nexus6P 竖直方向屏幕计算高度
-//                            // 等比例关系：width / 1440 = 4032 / 3024
-//                            // width = 4032 / 3024 * 1440
-//                            lp.width = (metrics.height() / ratio).toInt()
-//                            lp.height = metrics.height()
-//
-//                            viewW = lp.width
-//                            viewH = lp.height
-//                            imageW = maxImageSize.width
-//                            imageH = maxImageSize.height
-//                            screenSize = Size(metrics.width(), metrics.height())
-//                            // 只在水平方向加
-//                            initialIndicatorRect(binding.sbRectPercent.progress)
-//                        }
-//                        lp.gravity = Gravity.CENTER
-//                        fragment = Camera2PreviewFragment.newInstance(cameraId)
-//                        replaceFragment(fragment, R.id.fragment_container)
-//                    }
-//
-//                characteristic.get(CameraCharacteristics.SENSOR_ORIENTATION)?.let { orientation ->
-//                    Timber.d("摄像头方向：${orientation}")
-//                }
-//            }
-//        }
-//    }
-
     /**
      * 给预览和成像加上指示器矩形
      */
-    private fun initialIndicatorRect(percent: Int) {
+    private fun initialIndicatorRect(percent: Int, position: RectPos) {
         binding.vIndicatorRect.visibility = View.VISIBLE
 
         val r = screenSize!!.width.toFloat() / screenSize!!.height
@@ -173,14 +116,20 @@ class Camera2Activity : BaseCameraActivity<ActivityCamera2Binding>() {
 
         viewRect.left = (screenSize!!.width - indicatorW) / 2
         viewRect.right = viewRect.left + indicatorW
-        viewRect.top = (screenSize!!.height - indicatorH) / 2
+        viewRect.top = when(position) {
+            RectPos.CENTER -> (screenSize!!.height - indicatorH) / 2
+            RectPos.BOTTOM -> (screenSize!!.height / 2 - indicatorH) / 2 + screenSize!!.height / 2
+        }
         viewRect.bottom = viewRect.top + indicatorH
         binding.vIndicatorRect.drawRect(viewRect)
 
         val imageDrawRectW = (ratio * imageW).toInt()
         val imageDrawRectH = (imageDrawRectW / r).toInt()
         imgRect.left = ((imageW - imageDrawRectW) / 2f).toInt()
-        imgRect.top = ((imageH - imageDrawRectH) / 2f).toInt()
+        imgRect.top = when(position) {
+            RectPos.CENTER -> ((imageH - imageDrawRectH) / 2f).toInt()
+            RectPos.BOTTOM -> ((imageH / 2 - imageDrawRectH) / 2f).toInt() + imageH / 2
+        }
         imgRect.bottom = imgRect.top + imageDrawRectH
         imgRect.right = imgRect.left + imageDrawRectW
     }

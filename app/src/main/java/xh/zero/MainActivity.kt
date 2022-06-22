@@ -80,6 +80,7 @@ class MainActivity : AppCompatActivity() {
 
                 }
             }
+            binding.tvAvailableCamera.text = "可用的摄像数量：${cameraManager.cameraIdList.size}"
         } else {
             EasyPermissions.requestPermissions(
                 this,

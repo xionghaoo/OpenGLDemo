@@ -20,6 +20,15 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:id="@+id/tv_available_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:textSize="20sp"
+        android:layout_gravity="center_horizontal"
+        android:textColor="@android:color/holo_green_light"/>
+
     <Button
         android:id="@+id/btn_camera1"
         android:layout_width="match_parent"

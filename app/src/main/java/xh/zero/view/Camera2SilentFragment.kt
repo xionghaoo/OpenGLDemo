@@ -59,6 +59,7 @@ abstract class Camera2SilentFragment<VIEW: ViewBinding> : BaseCameraFragment<VIE
     override fun onDestroy() {
         stopCamera()
         cameraThread.quitSafely()
+        imageReaderThread.quitSafely()
         super.onDestroy()
     }
 
@@ -231,8 +232,8 @@ abstract class Camera2SilentFragment<VIEW: ViewBinding> : BaseCameraFragment<VIE
 
     private suspend fun takePhoto(): CombinedCaptureResult = suspendCoroutine { cont ->
         @Suppress("ControlFlowWithEmptyBody")
-//        while (imageReader.acquireNextImage() != null) {
-//        }
+        while (imageReader.acquireNextImage() != null) {
+        }
 
         // Start a new image queue
         val imageQueue = ArrayBlockingQueue<Image>(IMAGE_BUFFER_SIZE)

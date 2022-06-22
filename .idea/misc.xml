@@ -14,12 +14,14 @@
         <entry key="app/src/main/res/layout/activity_camera_xactivity.xml" value="0.28804347826086957" />
         <entry key="app/src/main/res/layout/activity_image.xml" value="0.2916666666666667" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.23233695652173914" />
+        <entry key="app/src/main/res/layout/activity_silent_capture.xml" value="0.31023550724637683" />
         <entry key="app/src/main/res/layout/fragment_camera1.xml" value="0.3197463768115942" />
         <entry key="app/src/main/res/layout/fragment_camera2.xml" value="0.2980072463768116" />
         <entry key="app/src/main/res/layout/fragment_camera2_preview.xml" value="0.2884963768115942" />
         <entry key="app/src/main/res/layout/fragment_camera_1.xml" value="0.18541666666666667" />
         <entry key="app/src/main/res/layout/fragment_camera_x.xml" value="0.30978260869565216" />
         <entry key="app/src/main/res/layout/fragment_camera_x_preview.xml" value="0.2884963768115942" />
+        <entry key="app/src/main/res/layout/fragment_silent_capture.xml" value="0.31023550724637683" />
       </map>
     </option>
   </component>
