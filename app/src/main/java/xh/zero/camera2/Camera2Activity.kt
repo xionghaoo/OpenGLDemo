@@ -56,6 +56,23 @@ class Camera2Activity : BaseCameraActivity<ActivityCamera2Binding>() {
             }
         }
 
+        binding.tvZoom.text = "画面缩放_0%"
+        binding.sbZoom.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                fragment.applyZoom(progress.toFloat() / 100)
+                binding.tvZoom.text = "画面缩放_${progress}%"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+
+            }
+        })
+
+
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             binding.sbRectPercent.visibility = View.GONE
             binding.tvRectPercent.visibility = View.GONE

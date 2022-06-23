@@ -59,6 +59,8 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
     private val imageReaderThread = HandlerThread("imageReaderThread").apply { start() }
     private val imageReaderHandler = Handler(imageReaderThread.looper)
     private lateinit var relativeOrientation: OrientationLiveData
+    private var captureRequestBuilder: CaptureRequest.Builder? = null
+    private var cropRect: Rect? = null
 
     override fun onDestroy() {
         stopCamera()
@@ -95,10 +97,10 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
         val surface = Surface(surfaceTexture)
         val targets = listOf<Surface>(surface, imageReader.surface)
         session = createCaptureSession(camera, targets, cameraHandler)
-        val captureRequest = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+        captureRequestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
             addTarget(surface)
         }
-        session.setRepeatingRequest(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
+        session.setRepeatingRequest(captureRequestBuilder!!.build(), object : CameraCaptureSession.CaptureCallback() {
             override fun onCaptureCompleted(
                 session: CameraCaptureSession,
                 request: CaptureRequest,
@@ -160,6 +162,41 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
         } catch (e: Exception) {
             Timber.e(e)
         }
+    }
+
+    fun applyZoom(zoom: Float) {
+        var zoomValue = zoom
+        val cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val characteristic = cameraManager.getCameraCharacteristics(cameraId)
+        val maxZoom = characteristic.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) ?: 1.0f
+        if (zoom > maxZoom) zoomValue = maxZoom
+        Timber.d("max zoom: ${maxZoom}")
+        val calZoom = zoomValue * (maxZoom - 1.0f) + 1.0f
+        cropRect = getZoomRect(calZoom, maxZoom)
+        captureRequestBuilder?.set(CaptureRequest.SCALER_CROP_REGION, cropRect)
+        session.setRepeatingRequest(captureRequestBuilder!!.build(), null, cameraHandler)
+    }
+
+    /**
+     * 获取缩放矩形
+     */
+    private fun getZoomRect(zoomLevel: Float, maxDigitalZoom: Float): Rect {
+        Timber.d("zoomlevel: $zoomLevel, maxDigitalZoom: $maxDigitalZoom")
+        val characteristic = cameraManager.getCameraCharacteristics(cameraId)
+        var activeRect = characteristic.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE) ?: Rect()
+        val minW = (activeRect.width() / maxDigitalZoom).toInt()
+        val minH = (activeRect.height() / maxDigitalZoom).toInt()
+        val difW = activeRect.width() - minW
+        val difH = activeRect.height() - minH
+
+        // When zoom is 1, we want to return new Rect(0, 0, width, height).
+        // When zoom is maxZoom, we want to return a centered rect with minW and minH
+        val cropW = (difW * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2f).toInt()
+        val cropH = (difH * (zoomLevel - 1) / (maxDigitalZoom - 1) / 2f).toInt()
+        return Rect(
+            cropW, cropH, activeRect.width() - cropW,
+            activeRect.height() - cropH
+        )
     }
 
     /**
@@ -283,6 +320,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
 
         val captureRequest = session.device.createCaptureRequest(
             CameraDevice.TEMPLATE_STILL_CAPTURE).apply { addTarget(imageReader.surface) }
+        if (cropRect != null) captureRequest.set(CaptureRequest.SCALER_CROP_REGION, cropRect)
         session.capture(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
 
             override fun onCaptureStarted(
