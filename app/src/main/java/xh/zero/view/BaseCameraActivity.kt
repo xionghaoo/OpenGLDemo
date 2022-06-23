@@ -40,7 +40,7 @@ abstract class BaseCameraActivity<V: ViewBinding> : AppCompatActivity() {
 
     abstract fun getBindingView(): V
 
-    abstract fun getCameraFragmentLayout(): ViewGroup
+    abstract fun getCameraFragmentLayout(): ViewGroup?
 
     abstract fun onCameraAreaCreated(cameraId: String, area: Size, screen: Size, supportImage: Size)
 
@@ -59,25 +59,28 @@ abstract class BaseCameraActivity<V: ViewBinding> : AppCompatActivity() {
                         val metrics = WindowManager(this).getCurrentWindowMetrics().bounds
                         // Nexus6P屏幕尺寸：1440 x 2560，包含NavigationBar的高度
                         Timber.d("屏幕尺寸：${metrics.width()} x ${metrics.height()}")
-                        val lp = getCameraFragmentLayout().layoutParams as ViewGroup.LayoutParams
+                        val layout =  getCameraFragmentLayout()
+                        var areaSize = Size(0, 0)
+                        if (layout != null) {
+                            val lp = layout.layoutParams as ViewGroup.LayoutParams
 
-                        Timber.d("屏幕方向: ${if (resources.configuration.orientation == 1) "竖直" else "水平"}")
-                        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                            // 竖直方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
-                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
-                            lp.width = metrics.width()
-                            // Nexus6P 竖直方向屏幕计算高度
-                            // 等比例关系：1440 / height = 3024 / 4032
-                            // height = 4032 / 3024 * 1440
-                            lp.height = (metrics.width() / ratio).toInt()
-                        } else {
-                            // 水平方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
-                            val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
-                            // Nexus6P 竖直方向屏幕计算高度
-                            // 等比例关系：width / 1440 = 4032 / 3024
-                            // width = 4032 / 3024 * 1440
-                            lp.width = (metrics.height() / ratio).toInt()
-                            lp.height = metrics.height()
+                            Timber.d("屏幕方向: ${if (resources.configuration.orientation == 1) "竖直" else "水平"}")
+                            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                                // 竖直方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
+                                val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
+                                lp.width = metrics.width()
+                                // Nexus6P 竖直方向屏幕计算高度
+                                // 等比例关系：1440 / height = 3024 / 4032
+                                // height = 4032 / 3024 * 1440
+                                lp.height = (metrics.width() / ratio).toInt()
+                            } else {
+                                // 水平方向：设置预览区域的尺寸，这个尺寸用于接收SurfaceTexture的显示
+                                val ratio = maxImageSize.height.toFloat() / maxImageSize.width.toFloat()
+                                // Nexus6P 竖直方向屏幕计算高度
+                                // 等比例关系：width / 1440 = 4032 / 3024
+                                // width = 4032 / 3024 * 1440
+                                lp.width = (metrics.height() / ratio).toInt()
+                                lp.height = metrics.height()
 
 //                            viewW = lp.width
 //                            viewH = lp.height
@@ -86,16 +89,15 @@ abstract class BaseCameraActivity<V: ViewBinding> : AppCompatActivity() {
 //                            screenSize = Size(metrics.width(), metrics.height())
 //                            // 只在水平方向加
 //                            initialIndicatorRect(binding.sbRectPercent.progress)
+                            }
+                            areaSize = Size(lp.width, lp.height)
                         }
                         onCameraAreaCreated(
                             cameraId,
-                            Size(lp.width, lp.height),
+                            areaSize,
                             Size(metrics.width(), metrics.height()),
                             Size(maxImageSize.width, maxImageSize.height)
                         )
-//                        lp.gravity = Gravity.CENTER
-//                        fragment = Camera2PreviewFragment.newInstance(cameraId)
-//                        replaceFragment(fragment, R.id.fragment_container)
                     }
 
                 characteristic.get(CameraCharacteristics.SENSOR_ORIENTATION)?.let { orientation ->

@@ -202,7 +202,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
     /**
      * 拍照
      */
-    fun takePicture(rect: Rect, drawRect: Boolean = false, complete: (String) -> Unit) {
+    fun takePicture(rect: Rect?, drawRect: Boolean = false, complete: (String) -> Unit) {
         // Disable click listener to prevent multiple requests simultaneously in flight
 //        it.isEnabled = false
 
@@ -236,7 +236,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
                         color = Color.argb(255, 255, 0, 0)
                     }
                     val rectTextPaint = IndicatorRectView.RectTextPaint(requireContext(), resources.getDimension(R.dimen.image_rect_text_size))
-                    rectTextPaint.setRect(rect)
+                    rectTextPaint.setRect(rect!!)
                     canvas.drawRect(rect, paint)
                     rectTextPaint.draw(rect, canvas)
                     canvas.setBitmap(bitmap)

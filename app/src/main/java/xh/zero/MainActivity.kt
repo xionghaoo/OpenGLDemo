@@ -18,6 +18,7 @@ import xh.zero.core.startPlainActivity
 import xh.zero.databinding.ActivityMainBinding
 import xh.zero.filterchain.FilterChainActivity
 import xh.zero.silentcamera.SilentCaptureActivity
+import xh.zero.tool.ToolActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,6 +48,10 @@ class MainActivity : AppCompatActivity() {
         binding.btnCameraCaptureSilent.setOnClickListener {
             // 静默拍照
             startPlainActivity(SilentCaptureActivity::class.java)
+        }
+
+        binding.btnCameraTool.setOnClickListener {
+            startPlainActivity(ToolActivity::class.java)
         }
 
         // 必要权限申请
