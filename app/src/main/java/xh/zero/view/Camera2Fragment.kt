@@ -62,6 +62,9 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
     private var captureRequestBuilder: CaptureRequest.Builder? = null
     private var cropRect: Rect? = null
 
+    protected var cameraWidth: Int? = null
+    protected var cameraHeight: Int? = null
+
     override fun onDestroy() {
         stopCamera()
         cameraThread.quitSafely()
@@ -90,7 +93,12 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
         val size = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
             .getOutputSizes(ImageFormat.JPEG)
             .maxByOrNull { it.height * it.width }!!
-        imageReader = ImageReader.newInstance(size.width, size.height, ImageFormat.JPEG, IMAGE_BUFFER_SIZE)
+        if (cameraWidth == null || cameraHeight == null) {
+            cameraWidth = size.width
+            cameraHeight = size.height
+        }
+        Timber.d("initializeCamera: ${cameraWidth} x ${cameraHeight}")
+        imageReader = ImageReader.newInstance(cameraWidth!!, cameraHeight!!, ImageFormat.JPEG, IMAGE_BUFFER_SIZE)
 
         getSurfaceView().holder.setFixedSize(getSurfaceView().width, getSurfaceView().height)
 

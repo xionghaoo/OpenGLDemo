@@ -6,14 +6,25 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".tool.ToolActivity"
-    android:background="@color/black">
+    android:background="@color/grey">
 
     <FrameLayout
         android:id="@+id/fragment_container"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="128dp"
+        android:layout_height="72dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/iv_result"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/avatars" />
 
     <Button
         android:id="@+id/btn_capture"
@@ -22,7 +33,7 @@
         android:layout_gravity="end|bottom"
         android:text="拍照"
         android:layout_marginEnd="10dp"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="40dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -44,5 +55,61 @@
         app:layout_constraintBottom_toBottomOf="@+id/sb_zoom"
         app:layout_constraintEnd_toStartOf="@+id/sb_zoom"
         app:layout_constraintTop_toTopOf="@+id/sb_zoom" />
+
+    <EditText
+        android:id="@+id/edt_ws_url"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="请输入websocket地址"
+        android:textColorHint="@color/white"
+        android:inputType="text"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btn_ws_connect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="连接"
+        android:layout_marginStart="10sp"
+        app:layout_constraintBottom_toBottomOf="@+id/edt_ws_url"
+        app:layout_constraintStart_toEndOf="@+id/edt_ws_url"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/btn_ws_connect"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edt_ws_url">
+
+        <TextView
+            android:id="@+id/tv_ws_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:textColor="@color/white" />
+    </ScrollView>
+
+    <Spinner
+        android:id="@+id/sp_resolution"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/sb_zoom"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/btn_clear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="清除"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_capture"
+        app:layout_constraintEnd_toStartOf="@+id/btn_capture"
+        app:layout_constraintTop_toTopOf="@+id/btn_capture" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
