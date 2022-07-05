@@ -18,6 +18,9 @@ import android.widget.SeekBar
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import com.bumptech.glide.Glide
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,7 +38,13 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
 
     private lateinit var fragment: ToolFragment
     private val wsClient = WebSocketClient {originTxt ->
-        binding.tvWsResult.text = originTxt
+        // JSONObject jsonObject = (new JSONObject(response)).getJSONObject("");
+        //textView.setText(jsonObject.toString(2));
+        val parser = JsonParser()
+        val jsonElement = parser.parse(originTxt)
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        val prettyJsonString = gson.toJson(jsonElement)
+        binding.tvWsResult.text = prettyJsonString
     }
     private var cameraWidth: Int? = null
     private var cameraHeight: Int? = null
@@ -86,16 +95,6 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
         portNumber = 9002
         wsClient.setAddr(hostTxt!!, portNumber!!)
         binding.edtWsUrl.setText("$hostTxt:$portNumber")
-//        binding.edtWsUrl.addTextChangedListener(
-//            onTextChanged = { txt, statr, count, after ->
-//                val t = txt?.split(":")
-//                if (t != null && t.size > 1) {
-//                    hostTxt = t[0]
-//                    portNumber = t[1].toInt()
-//                    wsClient.setAddr(hostTxt!!, portNumber!!)
-//                }
-//            }
-//        )
 
         binding.edtWsParam.setText("chinese_ocr")
         wsClient.setModel(binding.edtWsParam.text.toString())
