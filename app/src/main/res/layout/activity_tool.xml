@@ -84,7 +84,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/btn_ws_connect"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/edt_ws_url">
+        app:layout_constraintTop_toBottomOf="@+id/edt_ws_param">
 
         <TextView
             android:id="@+id/tv_ws_result"
@@ -111,5 +111,22 @@
         app:layout_constraintBottom_toBottomOf="@+id/btn_capture"
         app:layout_constraintEnd_toStartOf="@+id/btn_capture"
         app:layout_constraintTop_toTopOf="@+id/btn_capture" />
+
+    <EditText
+        android:id="@+id/edt_ws_param"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:background="@drawable/shape_bg_txt"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text=""
+        android:hint="请输入参数"
+        android:textColorHint="@color/white"
+        android:textColor="@color/white"
+        android:gravity="top|start"
+        android:padding="5dp"
+        app:layout_constraintEnd_toEndOf="@+id/btn_ws_connect"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edt_ws_url" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

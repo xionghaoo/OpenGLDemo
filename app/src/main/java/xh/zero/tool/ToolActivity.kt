@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
+import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
@@ -85,17 +86,31 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
         portNumber = 9002
         wsClient.setAddr(hostTxt!!, portNumber!!)
         binding.edtWsUrl.setText("$hostTxt:$portNumber")
-        binding.edtWsUrl.addTextChangedListener(
-            onTextChanged = { txt, statr, count, after ->
-                val t = txt?.split(":")
-                if (t != null && t.size > 1) {
-                    hostTxt = t[0]
-                    portNumber = t[1].toInt()
-                    wsClient.setAddr(hostTxt!!, portNumber!!)
-                }
-            }
-        )
+//        binding.edtWsUrl.addTextChangedListener(
+//            onTextChanged = { txt, statr, count, after ->
+//                val t = txt?.split(":")
+//                if (t != null && t.size > 1) {
+//                    hostTxt = t[0]
+//                    portNumber = t[1].toInt()
+//                    wsClient.setAddr(hostTxt!!, portNumber!!)
+//                }
+//            }
+//        )
+
+        binding.edtWsParam.setText("chinese_ocr")
+        wsClient.setModel(binding.edtWsParam.text.toString())
         binding.btnWsConnect.setOnClickListener {
+            val t = binding.edtWsUrl.text?.split(":")
+            if (t != null && t.size > 1) {
+                hostTxt = t[0]
+                portNumber = t[1].toInt()
+                wsClient.setAddr(hostTxt!!, portNumber!!)
+            } else {
+                Toast.makeText(this, "地址格式错误", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            wsClient.setAddr(hostTxt!!, portNumber!!)
+            wsClient.setModel(binding.edtWsParam.text.toString())
             wsClient.start(
                 success = {
                     binding.tvWsResult.text = "连接成功"

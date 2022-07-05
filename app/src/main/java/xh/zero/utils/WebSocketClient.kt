@@ -21,12 +21,17 @@ class WebSocketClient(
 
     private var host: String? = null
     private var port: Int? = null
+    private var model: String? = null
 
     private var session: ClientWebSocketSession? = null
 
     fun setAddr(host: String, port: Int) {
         this.host = host
         this.port = port
+    }
+
+    fun setModel(model: String) {
+        this.model = model
     }
 
     fun start(success: () -> Unit, failure: (e: String?) -> Unit) {
@@ -79,9 +84,9 @@ class WebSocketClient(
 
     suspend fun send(image: String?) {
         if (image == null) return
-        Timber.d("发送图片")
+        Timber.d("发送图片: $host, $port, $model")
         val resTxt = JsonObject()
-        resTxt.addProperty("model", "chinese_ocr")
+        resTxt.addProperty("model", model)
         resTxt.addProperty("image", image)
         session?.send(resTxt.toString())
     }
