@@ -13,11 +13,6 @@ class ToolFragment : Camera2Fragment<FragmentToolBinding>() {
         arguments?.getString("id") ?: "0"
     }
 
-    fun setSize(w: Int?, h: Int?) {
-        cameraWidth = w
-        cameraHeight = h
-    }
-
     override fun getBindingView(
         inflater: LayoutInflater,
         container: ViewGroup?

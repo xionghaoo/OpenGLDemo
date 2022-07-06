@@ -65,6 +65,11 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
     protected var cameraWidth: Int? = null
     protected var cameraHeight: Int? = null
 
+    fun setSize(w: Int?, h: Int?) {
+        cameraWidth = w
+        cameraHeight = h
+    }
+
     override fun onDestroy() {
         stopCamera()
         cameraThread.quitSafely()

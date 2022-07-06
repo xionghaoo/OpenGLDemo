@@ -117,6 +117,7 @@ class Camera2Activity : BaseCameraActivity<ActivityCamera2Binding>() {
         }
 
         fragment = Camera2PreviewFragment.newInstance(cameraId)
+//        fragment.setSize(1280, 720)
         replaceFragment(fragment, R.id.fragment_container)
     }
 
