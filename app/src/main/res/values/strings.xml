@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">OpenGLDemo</string>
-    <!-- TODO: Remove or change this placeholder text -->
+    <string name="app_name">摄像头工具</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val items = arrayOf(
-        "Camera2测试", "相机工具", "裁剪工具", "CameraX测试",
+        "摄像头校准", "识别接口测试", "图像裁剪", "CameraX测试",
         "Camera1测试", "过滤链测试", "无预览拍照测试",
     )
 
