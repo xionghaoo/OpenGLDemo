@@ -3,32 +3,37 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/drawable-v24/shape_bg_txt.xml" value="0.1625" />
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/drawable-v24/shape_menu.xml" value="0.1625" />
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/drawable-v24/shape_rect.xml" value="0.1625" />
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/drawable-v24/shape_ring_focus.xml" value="0.1625" />
         <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/layout/activity_camera1.xml" value="0.20833333333333334" />
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/layout/activity_camera2.xml" value="0.2927689594356261" />
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/layout/activity_crop.xml" value="0.2927689594356261" />
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/layout/activity_main.xml" value="0.2927689594356261" />
         <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/layout/activity_silent_capture.xml" value="0.15489130434782608" />
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/layout/activity_tool.xml" value="0.2927689594356261" />
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/layout/fragment_crop.xml" value="0.2927689594356261" />
         <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/layout/fragment_silent_capture.xml" value="0.15489130434782608" />
-        <entry key="app/src/main/res/drawable-v24/shape_bg_txt.xml" value="0.138" />
+        <entry key="..\:/Projects/android/OpenGLDemo/app/src/main/res/layout/fragment_tool.xml" value="0.2927689594356261" />
         <entry key="app/src/main/res/drawable-v24/shape_circle_focus.xml" value="0.1315" />
         <entry key="app/src/main/res/drawable-v24/shape_rect.xml" value="0.1295" />
         <entry key="app/src/main/res/drawable-v24/shape_ring_focus.xml" value="0.1315" />
         <entry key="app/src/main/res/layout/activity_camera1.xml" value="0.18541666666666667" />
-        <entry key="app/src/main/res/layout/activity_camera2.xml" value="0.5001259181810462" />
+        <entry key="app/src/main/res/layout/activity_camera2.xml" value="0.3016304347826087" />
         <entry key="app/src/main/res/layout/activity_camera_xactivity.xml" value="0.28804347826086957" />
         <entry key="app/src/main/res/layout/activity_image.xml" value="0.2916666666666667" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.23233695652173914" />
-        <entry key="app/src/main/res/layout/activity_silent_capture.xml" value="0.31023550724637683" />
-        <entry key="app/src/main/res/layout/activity_tool.xml" value="0.6750823155241775" />
         <entry key="app/src/main/res/layout/fragment_camera1.xml" value="0.3197463768115942" />
         <entry key="app/src/main/res/layout/fragment_camera2.xml" value="0.2980072463768116" />
-        <entry key="app/src/main/res/layout/fragment_camera2_preview.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/fragment_camera2_preview.xml" value="0.2884963768115942" />
         <entry key="app/src/main/res/layout/fragment_camera_1.xml" value="0.18541666666666667" />
         <entry key="app/src/main/res/layout/fragment_camera_x.xml" value="0.30978260869565216" />
         <entry key="app/src/main/res/layout/fragment_camera_x_preview.xml" value="0.2884963768115942" />
-        <entry key="app/src/main/res/layout/fragment_silent_capture.xml" value="0.31023550724637683" />
-        <entry key="app/src/main/res/layout/fragment_tool.xml" value="0.12487335359675786" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

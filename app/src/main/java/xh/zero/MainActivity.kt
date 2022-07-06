@@ -8,6 +8,9 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.ContextThemeWrapper
+import android.widget.Button
+import com.google.android.flexbox.FlexboxLayout
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 import timber.log.Timber
@@ -15,45 +18,52 @@ import xh.zero.camera1.Camera1Activity
 import xh.zero.camera2.Camera2Activity
 import xh.zero.camerax.CameraXActivity
 import xh.zero.core.startPlainActivity
+import xh.zero.core.utils.SystemUtil
 import xh.zero.databinding.ActivityMainBinding
 import xh.zero.filterchain.FilterChainActivity
 import xh.zero.silentcamera.SilentCaptureActivity
 import xh.zero.tool.ToolActivity
+import xh.zero.tool.crop.CropActivity
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private val items = arrayOf(
+        "Camera2测试", "相机工具", "裁剪工具", "CameraX测试",
+        "Camera1测试", "过滤链测试", "无预览拍照测试",
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        SystemUtil.toFullScreenMode(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnCamerax.setOnClickListener {
-            startPlainActivity(CameraXActivity::class.java)
+        binding.containerButtons.removeAllViews()
+        items.forEachIndexed { index, item ->
+            val btn = Button(ContextThemeWrapper(this, R.style.ToolMenu), null, 0)
+            btn.text = item
+            btn.setBackgroundResource(R.drawable.shape_menu)
+            binding.containerButtons.addView(btn)
+            val lp = btn.layoutParams as FlexboxLayout.LayoutParams
+            lp.width = resources.getDimension(R.dimen.size_button).toInt()
+            lp.height = resources.getDimension(R.dimen.size_button).toInt()
+            lp.leftMargin = resources.getDimension(R.dimen.margin_button).toInt()
+            lp.rightMargin = resources.getDimension(R.dimen.margin_button).toInt()
+            lp.topMargin = resources.getDimension(R.dimen.margin_button).toInt()
+            lp.bottomMargin = resources.getDimension(R.dimen.margin_button).toInt()
+            btn.setOnClickListener {
+                when(index) {
+                    0 -> startPlainActivity(Camera2Activity::class.java)
+                    1 -> startPlainActivity(ToolActivity::class.java)
+                    2 -> startPlainActivity(CropActivity::class.java)
+                    3 -> startPlainActivity(CameraXActivity::class.java)
+                    4 -> startPlainActivity(Camera1Activity::class.java)
+                    5 -> startPlainActivity(FilterChainActivity::class.java)
+                    6 -> startPlainActivity(SilentCaptureActivity::class.java)
+                }
+            }
         }
-
-        binding.btnCamera1.setOnClickListener {
-            startPlainActivity(Camera1Activity::class.java)
-        }
-
-        binding.btnCamera2.setOnClickListener {
-            startPlainActivity(Camera2Activity::class.java)
-        }
-
-        binding.btnCameraFilterChain.setOnClickListener {
-            startPlainActivity(FilterChainActivity::class.java)
-        }
-
-        binding.btnCameraCaptureSilent.setOnClickListener {
-            // 静默拍照
-            startPlainActivity(SilentCaptureActivity::class.java)
-        }
-
-        binding.btnCameraTool.setOnClickListener {
-            startPlainActivity(ToolActivity::class.java)
-        }
-
         // 必要权限申请
         permissionTask()
     }

@@ -215,7 +215,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
     /**
      * 拍照
      */
-    fun takePicture(rect: Rect?, drawRect: Boolean = false, complete: (String) -> Unit) {
+    fun takePicture(rect: Rect?, drawRect: Boolean = false, cropRect: Rect? = null, complete: (String) -> Unit) {
         // Disable click listener to prevent multiple requests simultaneously in flight
 //        it.isEnabled = false
 
@@ -256,6 +256,15 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
                     val bos = ByteArrayOutputStream()
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
                     FileOutputStream(output).use { it.write(bos.toByteArray()) }
+                }
+
+                if (cropRect != null) {
+                    val bitmap = BitmapFactory.decodeFile(output.absolutePath)
+                    val cropBitmap = Bitmap.createBitmap(bitmap, cropRect.left, cropRect.top, cropRect.width(), cropRect.height())
+                    val bos = ByteArrayOutputStream()
+                    cropBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
+                    FileOutputStream(output).use { it.write(bos.toByteArray()) }
+                    Timber.d("裁剪完的图片尺寸: ${cropBitmap.width} x ${cropBitmap.height}")
                 }
 
                 withContext(Dispatchers.Main) {
@@ -444,7 +453,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
          * @return [File] created.
          */
         private fun createFile(context: Context, extension: String): File {
-            val sdf = SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US)
+            val sdf = SimpleDateFormat("yyyyMMdd_HHmmssSSS", Locale.US)
             val rootDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             val pictureDir = File(rootDir, "roboland")
             if (!pictureDir.exists()) pictureDir.mkdir()

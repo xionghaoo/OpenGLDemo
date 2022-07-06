@@ -7,5 +7,7 @@
 	<dimen name="camera_focus_view_size">50dp</dimen>
 	<dimen name="camera_focus_view_ring_radius">24dp</dimen>
 	<dimen name="camera_focus_view_ring_width">0.5dp</dimen>
+	<dimen name="size_button">120dp</dimen>
+	<dimen name="margin_button">5dp</dimen>
 
 </resources>

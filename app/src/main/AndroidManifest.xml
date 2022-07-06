@@ -24,9 +24,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OpenGLDemo">
         <activity
+            android:name=".tool.crop.CropActivity"
+            android:exported="false"
+            android:screenOrientation="userLandscape" />
+        <activity
             android:name=".tool.ToolActivity"
             android:exported="false"
-            android:screenOrientation="userLandscape"/>
+            android:screenOrientation="userLandscape" />
         <activity
             android:name=".silentcamera.SilentCaptureActivity"
             android:exported="false" />
@@ -46,7 +50,8 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="userLandscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
