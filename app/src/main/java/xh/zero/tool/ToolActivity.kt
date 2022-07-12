@@ -21,9 +21,7 @@ import com.bumptech.glide.Glide
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import timber.log.Timber
 import xh.zero.ImageActivity
 import xh.zero.R
@@ -58,17 +56,31 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
         super.onCreate(savedInstanceState)
 
         binding.btnCapture.setOnClickListener {
-            fragment.takePicture(null, false) { imgPath ->
-                Timber.d("拍照完成")
-                CoroutineScope(Dispatchers.IO).launch {
-                    wsClient.send(encodeImage(BitmapFactory.decodeFile(imgPath)))
-                }
-//                ImageActivity.start(this, imgPath, requestedOrientation)
+            showContent(false)
+            CoroutineScope(Dispatchers.Default).launch {
+                delay(500)
+                withContext(Dispatchers.Main) {
+                    fragment.takePicture(null, false) { imgPath ->
+                        Timber.d("拍照完成")
+                        CoroutineScope(Dispatchers.IO).launch {
+                            wsClient.send(encodeImage(BitmapFactory.decodeFile(imgPath)))
+                        }
 
-                Glide.with(this)
-                    .load(imgPath)
-                    .into(binding.ivResult)
+                        Glide.with(this@ToolActivity)
+                            .load(imgPath)
+                            .into(binding.ivResult)
+
+                        CoroutineScope(Dispatchers.Default).launch {
+                            delay(500)
+                            withContext(Dispatchers.Main) {
+                                showContent(true)
+                            }
+                        }
+                    }
+                }
             }
+
+
         }
         binding.btnClear.setOnClickListener {
             binding.tvWsResult.text = ""
@@ -92,7 +104,7 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
         })
 
         hostTxt = "120.76.175.224"
-        portNumber = 9002
+        portNumber = 9001
         wsClient.setAddr(hostTxt!!, portNumber!!)
         binding.edtWsUrl.setText("$hostTxt:$portNumber")
 
@@ -120,6 +132,34 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
             )
         }
 
+    }
+
+    private fun showContent(isShow: Boolean) {
+        if (!isShow) {
+            binding.fragmentContainer.visibility = View.INVISIBLE
+            binding.ivResult.visibility = View.INVISIBLE
+            binding.btnCapture.visibility = View.INVISIBLE
+            binding.sbZoom.visibility = View.INVISIBLE
+            binding.tvZoom.visibility = View.INVISIBLE
+            binding.edtWsUrl.visibility = View.INVISIBLE
+            binding.btnWsConnect.visibility = View.INVISIBLE
+            binding.tvWsResult.visibility = View.INVISIBLE
+            binding.spResolution.visibility = View.INVISIBLE
+            binding.btnClear.visibility = View.INVISIBLE
+            binding.edtWsParam.visibility = View.INVISIBLE
+        } else {
+            binding.fragmentContainer.visibility = View.VISIBLE
+            binding.ivResult.visibility = View.VISIBLE
+            binding.btnCapture.visibility = View.VISIBLE
+            binding.sbZoom.visibility = View.VISIBLE
+            binding.tvZoom.visibility = View.VISIBLE
+            binding.edtWsUrl.visibility = View.VISIBLE
+            binding.btnWsConnect.visibility = View.VISIBLE
+            binding.tvWsResult.visibility = View.VISIBLE
+            binding.spResolution.visibility = View.VISIBLE
+            binding.btnClear.visibility = View.VISIBLE
+            binding.edtWsParam.visibility = View.VISIBLE
+        }
     }
 
     override fun getBindingView(): ActivityToolBinding = ActivityToolBinding.inflate(layoutInflater)
