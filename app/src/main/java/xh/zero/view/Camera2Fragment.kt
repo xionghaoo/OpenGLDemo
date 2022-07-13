@@ -259,13 +259,20 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
                 }
 
                 if (cropRect != null) {
+                    Timber.d("裁剪图片")
                     val bitmap = BitmapFactory.decodeFile(output.absolutePath)
-                    val cropBitmap = Bitmap.createBitmap(bitmap, cropRect.left, cropRect.top, cropRect.width(), cropRect.height())
-                    val bos = ByteArrayOutputStream()
-                    cropBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
-                    FileOutputStream(output).use { it.write(bos.toByteArray()) }
-                    Timber.d("裁剪完的图片尺寸: ${cropBitmap.width} x ${cropBitmap.height}")
+                    if (cropRect.left + cropRect.width() <= bitmap.width && cropRect.top + cropRect.height() <= bitmap.height) {
+                        val cropBitmap = Bitmap.createBitmap(bitmap, cropRect.left, cropRect.top, cropRect.width(), cropRect.height())
+                        val bos = ByteArrayOutputStream()
+                        cropBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos)
+                        FileOutputStream(output).use { it.write(bos.toByteArray()) }
+                        Timber.d("裁剪完的图片尺寸: ${cropBitmap.width} x ${cropBitmap.height}")
+                    } else {
+                        Timber.d("裁剪区域过大，允许大小：${bitmap.width} x ${bitmap.height}")
+                    }
                 }
+
+                Timber.d("回调拍照结果")
 
                 withContext(Dispatchers.Main) {
                     complete(output.absolutePath)

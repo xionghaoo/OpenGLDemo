@@ -13,7 +13,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.children
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.*
 import timber.log.Timber
 import xh.zero.R
 import xh.zero.camera2.Camera2Activity
@@ -36,33 +38,68 @@ class CropActivity : BaseCameraActivity<ActivityCropBinding>() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        /**
+         *  val l = 160
+        val t = 225
+        val w = 960
+        val h = 710
+         */
+
+        binding.edtX.setText("150")
+        binding.edtY.setText("235")
+        binding.edtWidth.setText("980")
+        binding.edtHeight.setText("800")
+
         binding.btnCapture.setOnClickListener {
-            val l = 160
-            val t = 225
-            val w = 960
-            val h = 710
+            val l = binding.edtX.text.toString().toInt()
+            val t = binding.edtY.text.toString().toInt()
+            val w = binding.edtWidth.text.toString().toInt()
+            val h = binding.edtHeight.text.toString().toInt()
             rect.left = l
             rect.top = t
             rect.right = l + w
             rect.bottom = t + h
 
-            binding.fragmentContainer.visibility = View.INVISIBLE
-            binding.btnCapture.visibility = View.INVISIBLE
-            binding.btnClear.visibility = View.INVISIBLE
+            if (rect.right > 1280) rect.right = 1280
+            if (rect.bottom > 1024) rect.bottom = 1024
 
-            fragment.takePicture(null, false, rect) { imgPath ->
-                Timber.d("拍照完成")
-                Glide.with(this)
-                    .load(imgPath)
-                    .into(binding.ivResult)
+            Timber.d("截取矩形： $rect")
+            showContent(false)
+            CoroutineScope(Dispatchers.Default).launch {
+                delay(500)
+                withContext(Dispatchers.Main) {
+                    fragment.takePicture(null, false, rect) { imgPath ->
+                        Timber.d("拍照完成")
+                        Glide.with(this@CropActivity)
+                            .load(imgPath)
+                            .into(binding.ivResult)
 
-                binding.fragmentContainer.visibility = View.VISIBLE
-                binding.btnCapture.visibility = View.VISIBLE
-                binding.btnClear.visibility = View.VISIBLE
+                        CoroutineScope(Dispatchers.Default).launch {
+                            delay(500)
+                            withContext(Dispatchers.Main) {
+                                showContent(true)
+                            }
+                        }
+                    }
+                }
             }
+
+
         }
         binding.btnClear.setOnClickListener {
             binding.ivResult.setImageDrawable(null)
+        }
+    }
+
+    private fun showContent(isShow: Boolean) {
+        if (isShow) {
+            binding.root.children.forEach { v ->
+                v.visibility = View.VISIBLE
+            }
+        } else {
+            binding.root.children.forEach { v ->
+                v.visibility = View.INVISIBLE
+            }
         }
     }
 
