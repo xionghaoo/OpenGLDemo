@@ -1,13 +1,17 @@
 package xh.zero.tool
 
+import android.content.ActivityNotFoundException
 import android.content.Context
-import android.content.res.Configuration
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.util.Base64
 import android.util.Size
 import android.view.View
@@ -16,33 +20,37 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.Toast
-import androidx.core.widget.addTextChangedListener
+import androidx.core.content.FileProvider
+import androidx.core.view.children
 import com.bumptech.glide.Glide
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import kotlinx.coroutines.*
 import timber.log.Timber
-import xh.zero.ImageActivity
+import xh.zero.BuildConfig
 import xh.zero.R
-import xh.zero.camera2.Camera2Activity
 import xh.zero.core.replaceFragment
 import xh.zero.databinding.ActivityToolBinding
 import xh.zero.utils.WebSocketClient
 import xh.zero.view.BaseCameraActivity
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.net.URLDecoder
+
 
 class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
+
+    companion object {
+        private const val REQUEST_SELECT_FILE = 1
+    }
 
     private lateinit var fragment: ToolFragment
     private val wsClient = WebSocketClient {originTxt ->
         // JSONObject jsonObject = (new JSONObject(response)).getJSONObject("");
         //textView.setText(jsonObject.toString(2));
-        val parser = JsonParser()
-        val jsonElement = parser.parse(originTxt)
-        val gson = GsonBuilder().setPrettyPrinting().create()
-        val prettyJsonString = gson.toJson(jsonElement)
-        binding.tvWsResult.text = prettyJsonString
+
+        binding.tvWsResult.text = formatJson(originTxt)
     }
     private var cameraWidth: Int? = null
     private var cameraHeight: Int? = null
@@ -51,6 +59,14 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
     private var hostTxt: String? = null
     private var portNumber: Int? = null
     private var selectedPos = 0
+
+    // 0: websocket, 1: http_dev, 2: http_prod
+    private var apiSelection = 0
+    private var isHttpProd = false
+
+    private val prefs by lazy {
+        SharedPreferenceStorage(applicationContext)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,8 +78,29 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
                 withContext(Dispatchers.Main) {
                     fragment.takePicture(null, false) { imgPath ->
                         Timber.d("拍照完成")
-                        CoroutineScope(Dispatchers.IO).launch {
-                            wsClient.send(encodeImage(BitmapFactory.decodeFile(imgPath)))
+                        val imgData = encodeImage(BitmapFactory.decodeFile(imgPath))
+                        if (apiSelection == 0) {
+                            // 提交Websocket数据
+                            CoroutineScope(Dispatchers.IO).launch {
+                                wsClient.send(imgData)
+                            }
+                            prefs.wsUrl = binding.edtWsUrl.text.toString()
+                        } else {
+                            // 提交Http数据
+                            val json = JsonObject()
+                            json.addProperty("image_base64", imgData)
+                            ApiRequest.post(
+                                isProd = isHttpProd,
+                                url = binding.edtWsUrl.text.toString(),
+                                json = json.toString(),
+                                success = { r ->
+                                    binding.tvWsResult.text = formatJson(r)
+                                },
+                                failure = { e ->
+                                    binding.tvWsResult.text = e
+                                }
+                            )
+                            prefs.httpUrl = binding.edtWsUrl.text.toString()
                         }
 
                         Glide.with(this@ToolActivity)
@@ -83,8 +120,7 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
 
         }
         binding.btnClear.setOnClickListener {
-            binding.tvWsResult.text = ""
-            binding.ivResult.setImageDrawable(null)
+            clearScreen()
         }
 
         binding.tvZoom.text = "画面缩放_0%"
@@ -103,10 +139,12 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
             }
         })
 
-        hostTxt = "120.76.175.224"
-        portNumber = 9001
+        val wsUrls = prefs.wsUrl!!.split(":")
+        hostTxt = wsUrls[0]
+        portNumber = wsUrls[1].toInt()
         wsClient.setAddr(hostTxt!!, portNumber!!)
         binding.edtWsUrl.setText("$hostTxt:$portNumber")
+
 
         binding.edtWsParam.setText("chinese_ocr")
         wsClient.setModel(binding.edtWsParam.text.toString())
@@ -132,33 +170,118 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
             )
         }
 
+        // 接口类型选择
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, arrayOf("Websocket", "HttpDev", "HttpProd"))
+        binding.spApiSelect.adapter = adapter
+        binding.spApiSelect.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                apiSelection = position
+                when (apiSelection) {
+                    0 -> {
+                        // websocket
+//                        binding.edtWsUrl.visibility = View.VISIBLE
+                        binding.edtWsUrl.setText("${hostTxt}:${portNumber}")
+                        binding.edtWsParam.visibility = View.VISIBLE
+                        binding.btnWsConnect.visibility = View.VISIBLE
+                    }
+                    1, 2 -> {
+                        // http
+                        binding.edtWsUrl.setText(prefs.httpUrl)
+                        binding.edtWsParam.visibility = View.GONE
+                        binding.btnWsConnect.visibility = View.GONE
+                        // 是否生产模式
+                        isHttpProd = apiSelection == 2
+                    }
+                }
+                clearScreen()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+
+            }
+        }
+
+        binding.btnSelectBg.setOnClickListener {
+            selectFile()
+        }
+
+    }
+
+    private fun clearScreen() {
+        binding.tvWsResult.text = ""
+        binding.ivResult.setImageDrawable(null)
     }
 
     private fun showContent(isShow: Boolean) {
         if (!isShow) {
-            binding.fragmentContainer.visibility = View.INVISIBLE
-            binding.ivResult.visibility = View.INVISIBLE
-            binding.btnCapture.visibility = View.INVISIBLE
-            binding.sbZoom.visibility = View.INVISIBLE
-            binding.tvZoom.visibility = View.INVISIBLE
-            binding.edtWsUrl.visibility = View.INVISIBLE
-            binding.btnWsConnect.visibility = View.INVISIBLE
-            binding.tvWsResult.visibility = View.INVISIBLE
-            binding.spResolution.visibility = View.INVISIBLE
-            binding.btnClear.visibility = View.INVISIBLE
-            binding.edtWsParam.visibility = View.INVISIBLE
+            binding.root.children.forEach { child ->
+                if (child.id != binding.ivBg.id) {
+                    child.visibility = View.INVISIBLE
+                }
+            }
         } else {
-            binding.fragmentContainer.visibility = View.VISIBLE
-            binding.ivResult.visibility = View.VISIBLE
-            binding.btnCapture.visibility = View.VISIBLE
-            binding.sbZoom.visibility = View.VISIBLE
-            binding.tvZoom.visibility = View.VISIBLE
-            binding.edtWsUrl.visibility = View.VISIBLE
-            binding.btnWsConnect.visibility = View.VISIBLE
-            binding.tvWsResult.visibility = View.VISIBLE
-            binding.spResolution.visibility = View.VISIBLE
-            binding.btnClear.visibility = View.VISIBLE
-            binding.edtWsParam.visibility = View.VISIBLE
+            binding.root.children.forEach { child ->
+                child.visibility = View.VISIBLE
+            }
+        }
+
+        when (apiSelection) {
+            1, 2 -> {
+                // http
+                binding.edtWsParam.visibility = View.GONE
+                binding.btnWsConnect.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun formatJson(originTxt: String?): String {
+        val parser = JsonParser()
+        val jsonElement = parser.parse(originTxt)
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        return gson.toJson(jsonElement)
+    }
+
+    private fun selectFile() {
+        val cameraToolDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "CameraTool")
+        if (!cameraToolDir.exists()) {
+            cameraToolDir.mkdir()
+        }
+        val selectedUri = Uri.parse(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "/CameraTool/"
+        )
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "image/*"
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.setDataAndType(selectedUri, "*/*")
+        try {
+            startActivityForResult(intent, REQUEST_SELECT_FILE)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, "Cannot Open File Chooser", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        super.onActivityResult(requestCode, resultCode, intent)
+        if (requestCode == REQUEST_SELECT_FILE) {
+            val path = intent?.data?.encodedPath
+            val tag = "CameraTool%2F"
+            val start = path?.indexOf(tag)
+            val filename = if (start == null || start == -1) {
+                null
+            } else {
+                URLDecoder.decode(intent.data?.encodedPath?.substring(start + tag.length), "UTF-8")
+            }
+            val downloadDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "CameraTool")
+            val imageFile = File(downloadDir, filename)
+
+            Glide.with(this)
+                .load(imageFile)
+                .into(binding.ivBg)
         }
     }
 
@@ -181,7 +304,7 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
                 cameraSize = configurationMap?.getOutputSizes(ImageFormat.JPEG)
                 val sizes = cameraSize?.mapIndexed { index, size ->
                     Timber.d("摄像头尺寸： $size")
-                    if (size.width == 640 && size.height == 480) {
+                    if (size.width == prefs.captureWidth && size.height == prefs.captureHeight) {
                         Timber.d("初始化尺寸：$index")
                         cameraWidth = size.width
                         cameraHeight = size.height
@@ -206,6 +329,8 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
 
                     fragment = ToolFragment.newInstance(selectedCameraId)
                     fragment.setSize(cameraSize!![position].width, cameraSize!![position].height)
+                    prefs.captureWidth = cameraSize!![position].width
+                    prefs.captureHeight = cameraSize!![position].height
                     replaceFragment(fragment, R.id.fragment_container)
                 }
             }
@@ -228,5 +353,21 @@ class ToolActivity : BaseCameraActivity<ActivityToolBinding>() {
         bm.compress(Bitmap.CompressFormat.JPEG, 100, baos)
         val b = baos.toByteArray()
         return Base64.encodeToString(b, Base64.DEFAULT)
+    }
+
+    fun getUriFromFile(context: Context?, file: File?): Uri? {
+        if (context == null || file == null) {
+            throw NullPointerException()
+        }
+        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            FileProvider.getUriForFile(
+                context.applicationContext,
+                BuildConfig.APPLICATION_ID.toString() + ".fileprovider",
+                file
+            )
+        } else {
+            Uri.fromFile(file)
+        }
+        return uri
     }
 }
