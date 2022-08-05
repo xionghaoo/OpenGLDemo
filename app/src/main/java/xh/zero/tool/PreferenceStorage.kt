@@ -29,7 +29,7 @@ class SharedPreferenceStorage(context: Context) :
     }
 
     override var httpUrl by StringPreference(prefs, PREF_HTTP_URL, "code_cards/auto_recognition")
-    override var wsUrl by StringPreference(prefs, PREF_WS_URL, "120.76.175.224")
+    override var wsUrl by StringPreference(prefs, PREF_WS_URL, "120.76.175.224:9001")
     override var captureWidth: Int by IntPreference(prefs, PREF_CAPTURE_WIDTH, 640)
     override var captureHeight: Int by IntPreference(prefs, PREF_CAPTURE_HEIGHT, 480)
 
