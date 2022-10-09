@@ -47,6 +47,7 @@ abstract class BaseCameraActivity<V: ViewBinding> : AppCompatActivity() {
     private fun initialCameraArea() {
         val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
         cameraManager.cameraIdList.forEachIndexed { index, cameraId ->
+            Timber.d("可用摄像头id: $cameraId")
             val characteristic = cameraManager.getCameraCharacteristics(cameraId)
             // 打开第一个摄像头
             if (index == 0) {

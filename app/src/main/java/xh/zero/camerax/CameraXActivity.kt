@@ -2,6 +2,7 @@ package xh.zero.camerax
 
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.ImageFormat
 import android.graphics.Point
 import android.hardware.camera2.CameraCharacteristics
@@ -26,8 +27,13 @@ import xh.zero.core.utils.SystemUtil
 import xh.zero.core.utils.ToastUtil
 import xh.zero.databinding.ActivityCameraXactivityBinding
 import xh.zero.view.BaseCameraActivity
+import xh.zero.view.BaseCameraFragment
+import java.io.File
+import java.io.FileOutputStream
 
-class CameraXActivity : BaseCameraActivity<ActivityCameraXactivityBinding>() {
+class CameraXActivity : BaseCameraActivity<ActivityCameraXactivityBinding>(),
+    CameraXPreviewFragment.OnFragmentActionListener
+{
 
     companion object {
         // 屏幕缩放比例
@@ -35,14 +41,16 @@ class CameraXActivity : BaseCameraActivity<ActivityCameraXactivityBinding>() {
     }
 
     private lateinit var fragment: CameraXPreviewFragment
+    private var isCapture = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding.btnCapture.setOnClickListener {
-            fragment.takePhoto { path ->
-                ToastUtil.show(this, "照片已保存到：$path")
-                ImageActivity.start(this, path, requestedOrientation)
-            }
+//            fragment.takePhoto { path ->
+//                ToastUtil.show(this, "照片已保存到：$path")
+//                ImageActivity.start(this, path, requestedOrientation)
+//            }
+            isCapture = true
         }
     }
 
@@ -58,6 +66,27 @@ class CameraXActivity : BaseCameraActivity<ActivityCameraXactivityBinding>() {
     ) {
         fragment =  CameraXPreviewFragment.newInstance(cameraId)
         replaceFragment(fragment, R.id.fragment_container)
+    }
+
+    override fun onAnalysisImage(bitmap: Bitmap) {
+        if (isCapture) {
+            storeBitmap(bitmap)
+        }
+    }
+
+    private fun storeBitmap(bitmap: Bitmap){
+        val file = BaseCameraFragment.createFile(this, "jpg")
+        val out = FileOutputStream(file)
+        try {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+            out.flush()
+            out.close()
+            isCapture = false
+
+            ImageActivity.start(this, file.absolutePath, requestedOrientation)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun onResume() {

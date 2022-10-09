@@ -3,17 +3,19 @@ package xh.zero.view
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.*
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraManager
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
+import android.util.Size
 import android.view.*
 import android.webkit.MimeTypeMap
 import android.widget.Toast
+import androidx.annotation.WorkerThread
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.core.*
 import androidx.camera.core.Camera
@@ -22,10 +24,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toFile
 import androidx.viewbinding.ViewBinding
 import androidx.window.WindowManager
-import timber.log.Timber
-import xh.zero.R
-import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -53,11 +51,20 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
     private lateinit var surfaceExecutor: ExecutorService
 
     // 照片输出路径
-    private lateinit var outputDirectory: File
+//    private lateinit var outputDirectory: File
 
     private lateinit var surfaceTexture: SurfaceTexture
 
+    private lateinit var bitmapBuffer: Bitmap
+    private var imageRotationDegrees: Int = 0
+    var isStopAnalysis = false
+
+    protected abstract var captureSize: Size?
+    protected abstract val surfaceRatio: Size
+
     override fun onDestroy() {
+        Log.d(TAG, "onDestroy")
+        isStopAnalysis = true
         cameraExecutor.apply {
             shutdown()
             awaitTermination(1000, TimeUnit.MILLISECONDS)
@@ -69,28 +76,33 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
         super.onDestroy()
     }
 
+    override fun onDetach() {
+        Log.d(TAG, "onDetach")
+        super.onDetach()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // Initialize our background executor
         cameraExecutor = Executors.newSingleThreadExecutor()
         surfaceExecutor = Executors.newSingleThreadExecutor()
         // Determine the output directory
-        outputDirectory = getOutputDirectory(requireContext())
+//        outputDirectory = getOutputDirectory(requireContext())
 
         windowManager = WindowManager(view.context)
 
         getSurfaceView().setOnSurfaceCreated { sfTexture ->
             surfaceTexture = sfTexture
-            setSurfaceBufferSize(surfaceTexture)
+            setSurfaceBufferSize(surfaceRatio, surfaceTexture)
             displayId = getSurfaceView().display.displayId
             setupCamera()
         }
 
         // 手动对焦
         getSurfaceView().setOnGestureDetect(object : GestureDetector.SimpleOnGestureListener() {
-            override fun onSingleTapUp(e: MotionEvent?): Boolean {
-                val x = e?.x ?: 0f
-                val y = e?.y ?: 0f
+            override fun onSingleTapUp(e: MotionEvent): Boolean {
+                val x = e.x ?: 0f
+                val y = e.y ?: 0f
 
                 val factory: MeteringPointFactory = SurfaceOrientedMeteringPointFactory(
                     getSurfaceView().width.toFloat(), getSurfaceView().height.toFloat()
@@ -105,9 +117,7 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
                         ).apply {
                             //focus only when the user tap the preview
                             disableAutoCancel()
-
-                            animFocusView(binding.root.findViewById(R.id.focus_view), x, y, true)
-                            animFocusView(binding.root.findViewById(R.id.focus_view_circle), x, y, false)
+                            onFocusTap(x, y)
                         }.build()
                     )
                 } catch (e: CameraInfoUnavailableException) {
@@ -118,52 +128,7 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
         })
     }
 
-    /**
-     * Focus view animation
-     */
-    private fun animFocusView(v: View, focusX: Float, focusY: Float, isRing: Boolean) {
-        v.visibility = View.VISIBLE
-        v.x = focusX - v.width / 2
-        v.y = focusY - v.height / 2
-
-        // 圆环和圆饼是不同的View，因此得到的ViewPropertyAnimator是不同的
-        val anim = v.animate()
-        anim.cancel()
-
-        if (isRing) {
-            // 圆环
-            v.scaleX = 1.6f
-            v.scaleY = 1.6f
-            v.alpha = 1f
-            anim.scaleX(1f)
-                .scaleY(1f)
-                .setDuration(300)
-                .withEndAction {
-                    v.animate()
-                        .alpha(0f)
-                        .setDuration(1000)
-                        .withEndAction { v.visibility = View.INVISIBLE }
-                        .start()
-                }
-                .start()
-        } else {
-            // 圆饼
-            v.scaleX = 0f
-            v.scaleY = 0f
-            v.alpha = 1f
-            anim.scaleX(1f)
-                .scaleY(1f)
-                .setDuration(300)
-                .withEndAction {
-                    v.animate()
-                        .alpha(0f)
-                        .setDuration(1000)
-                        .withEndAction { v.visibility = View.INVISIBLE }
-                        .start()
-                }
-                .start()
-        }
-    }
+    abstract fun onFocusTap(x: Float, y: Float)
 
     private fun setupCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
@@ -195,10 +160,10 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
     private fun bindCameraUseCases() {
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = windowManager.getCurrentWindowMetrics().bounds
-        Timber.d("Screen metrics: ${metrics.width()} x ${metrics.height()}")
+        Log.d(TAG, "Screen metrics: ${metrics.width()} x ${metrics.height()}")
 
         val screenAspectRatio = aspectRatio(getSurfaceView().width, getSurfaceView().height)
-        Timber.d("Preview aspect ratio: $screenAspectRatio")
+        Log.d(TAG, "Preview aspect ratio: $screenAspectRatio")
 
         val rotation = getSurfaceView().display.rotation
 
@@ -238,23 +203,40 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
             .setJpegQuality(100)
             .build()
 
-        // ImageAnalysis 用例
-        imageAnalyzer = ImageAnalysis.Builder()
-            // We request aspect ratio but no resolution
-            .setTargetAspectRatio(screenAspectRatio)
-            // Set initial target rotation, we will have to call this again if rotation changes
-            // during the lifecycle of this use case
-            .setTargetRotation(rotation)
-            .build()
-            // The analyzer can then be assigned to the instance
-            .also {
-//                it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-//                    // Values returned from our analyzer are passed to the attached listener
-//                    // We log image analysis results here - you should do something useful
-//                    // instead!
-//                    Timber.d("Average luminosity: $luma")
-//                })
-            }
+        if (captureSize != null) {
+            // ImageAnalysis 用例
+            imageAnalyzer = ImageAnalysis.Builder()
+                // We request aspect ratio but no resolution
+//            .setTargetAspectRatio(screenAspectRatio)
+                .setTargetRotation(rotation)
+                // 大分辨率
+//            .setTargetResolution(Size(960, 1280))
+                .setTargetResolution(captureSize!!)
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                .build()
+                // The analyzer can then be assigned to the instance
+                .also {
+                    it.setAnalyzer(cameraExecutor, ImageAnalysis.Analyzer { image ->
+                        if (!::bitmapBuffer.isInitialized) {
+                            imageRotationDegrees = image.imageInfo.rotationDegrees
+                            bitmapBuffer = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
+                        }
+//                        Timber.d("ImageAnalysis: image width: ${image.width}, height: ${image.height}, rotation: ${image.imageInfo.rotationDegrees}")
+                        image.use { bitmapBuffer.copyPixelsFromBuffer(image.planes[0].buffer) }
+                        // 拿到的图片是逆时针转了90度的图，这里修正它
+//                        val matrix = Matrix()
+//                        matrix.postRotate(IMAGE_ROTATE)
+//                        val bitmap = Bitmap.createBitmap(bitmapBuffer, 0, 0, bitmapBuffer.width, bitmapBuffer.height, matrix, true)
+                        // 监听线程关闭的消息
+                        if (isStopAnalysis) {
+                            return@Analyzer
+                        }
+                        onAnalysisImage(bitmapBuffer)
+
+                    })
+                }
+        }
 
         // Must unbind the use-cases before rebinding them
         cameraProvider.unbindAll()
@@ -262,8 +244,13 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
         try {
             // A variable number of use-cases can be passed here -
             // camera provides access to CameraControl & CameraInfo
-            camera = cameraProvider.bindToLifecycle(
-                this, cameraSelector, preview, imageCapture, imageAnalyzer)
+            camera = if (captureSize != null) {
+                cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview, imageCapture, imageAnalyzer)
+            } else {
+                cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview, imageCapture)
+            }
 
             // Attach the viewfinder's surface provider to preview use case
 //            preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
@@ -273,14 +260,17 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
                     surface.release()
                     surfaceTexture.release()
                     // 0: success
-                    Timber.d("surface used result: ${result.resultCode}")
+                    Log.d(TAG, "surface used result: ${result.resultCode}")
                 }
             }
             observeCameraState(camera?.cameraInfo!!)
         } catch (exc: Exception) {
-            Timber.e("Use case binding failed: $exc")
+            Log.e(TAG, "Use case binding failed: $exc")
         }
     }
+
+    @WorkerThread
+    abstract fun onAnalysisImage(bitmap: Bitmap)
 
     private fun aspectRatio(width: Int, height: Int): Int {
         val previewRatio = max(width, height).toDouble() / min(width, height)
@@ -390,7 +380,7 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
         imageCapture?.let { imageCapture ->
 
             // Create output file to hold the image
-            val photoFile = createFile(outputDirectory, FILENAME, PHOTO_EXTENSION)
+            val photoFile = createFile(requireContext(), PHOTO_EXTENSION)
 
             // Setup image capture metadata
             val metadata = ImageCapture.Metadata().apply {
@@ -408,7 +398,7 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
             imageCapture.takePicture(
                 outputOptions, cameraExecutor, object : ImageCapture.OnImageSavedCallback {
                     override fun onError(exc: ImageCaptureException) {
-                        Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                        Log.e(TAG, "Photo capture failed: ${exc.message}")
                     }
 
                     override fun onImageSaved(output: ImageCapture.OutputFileResults) {
@@ -461,26 +451,14 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
     }
 
     companion object {
-        private const val TAG = "CameraXFragment"
-        private const val FILENAME = "yyyy-MM-dd-HH-mm-ss-SSS"
-        private const val PHOTO_EXTENSION = ".jpg"
+        private const val PHOTO_EXTENSION = "jpg"
         private const val RATIO_4_3_VALUE = 4.0 / 3.0
         private const val RATIO_16_9_VALUE = 16.0 / 9.0
 
-        private const val FOCUS_AREA_RADIUS = 400
+        private const val IMAGE_ROTATE = 90f
+        const val DEFAULT_ANALYZE_IMAGE_WIDTH = 480
+        const val DEFAULT_ANALYZE_IMAGE_HEIGHT = 640
 
-        /** Helper function used to create a timestamped file */
-        private fun createFile(baseFolder: File, format: String, extension: String) =
-            File(baseFolder, SimpleDateFormat(format, Locale.US)
-                .format(System.currentTimeMillis()) + extension)
-
-        /** Use external media if it is available, our app's file directory otherwise */
-        fun getOutputDirectory(context: Context): File {
-            val appContext = context.applicationContext
-            val mediaDir = context.externalMediaDirs.firstOrNull()?.let {
-                File(it, appContext.resources.getString(R.string.app_name)).apply { mkdirs() } }
-            return if (mediaDir != null && mediaDir.exists())
-                mediaDir else appContext.filesDir
-        }
+        private const val TAG = "CameraXFragment"
     }
 }

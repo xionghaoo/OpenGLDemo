@@ -10,6 +10,7 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.opengl.GLES20
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +19,13 @@ import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import timber.log.Timber
 import xh.zero.widgets.BaseSurfaceView
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -41,7 +49,7 @@ abstract class Camera1Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>(), 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         getSurfaceView().setOnSurfaceCreated { surfaceTexture ->
-            setSurfaceBufferSize(surfaceTexture)
+            setSurfaceBufferSize(surfaceTexture = surfaceTexture)
             openCamera(cameraId.toInt(), surfaceTexture)
             startPreview()
         }
@@ -100,14 +108,14 @@ abstract class Camera1Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>(), 
     }
 
     private fun isSupport(backOrFront: Int): Boolean {
-        val cameraInfo = CameraInfo()
-        for (i in 0 until Camera.getNumberOfCameras()) {
-            Camera.getCameraInfo(i, cameraInfo)
-            if (cameraInfo.facing == backOrFront) {
-                return true
-            }
-        }
-        return false
+//        val cameraInfo = CameraInfo()
+//        for (i in 0 until Camera.getNumberOfCameras()) {
+//            Camera.getCameraInfo(i, cameraInfo)
+//            if (cameraInfo.facing == backOrFront) {
+//                return true
+//            }
+//        }
+        return true
     }
 
     private fun startPreview() {
@@ -124,6 +132,27 @@ abstract class Camera1Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>(), 
 
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
         Log.d(TAG, "onFrameAvailable: $surfaceTexture")
+    }
+
+    fun takePhoto(result: (path: String) -> Unit) {
+        camera?.takePicture(null, null) { data, camera ->
+            try {
+                val output = createFile(requireContext(), "jpg")
+                FileOutputStream(output).use { it.write(data) }
+                result(output.absolutePath)
+            } catch (exc: IOException) {
+                Log.e(TAG, "Unable to write JPEG image to file", exc)
+            }
+        }
+    }
+
+    private fun createFile(context: Context, extension: String): File {
+        val sdf = SimpleDateFormat("yyyyMMdd_HHmmssSSS", Locale.US)
+        val rootDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val pictureDir = File(rootDir, "roboland")
+        if (!pictureDir.exists()) pictureDir.mkdir()
+//            return File(Environment.getExternalStorageDirectory(), "IMG_${sdf.format(Date())}.$extension")
+        return File(pictureDir, "IMG_${sdf.format(Date())}.$extension")
     }
 
     companion object {

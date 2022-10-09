@@ -81,7 +81,7 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
         super.onViewCreated(view, savedInstanceState)
         getSurfaceView().setOnSurfaceCreated { sf ->
             surfaceTexture = sf
-            setSurfaceBufferSize(surfaceTexture)
+            setSurfaceBufferSize(surfaceTexture = surfaceTexture)
             initializeCamera()
         }
 
@@ -359,6 +359,15 @@ abstract class Camera2Fragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
                 frameNumber: Long) {
                 super.onCaptureStarted(session, request, timestamp, frameNumber)
 //                fragmentCameraBinding.viewFinder.post(animationTask)
+                Timber.d("开始拍照")
+            }
+
+            override fun onCaptureFailed(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                failure: CaptureFailure
+            ) {
+                Timber.d("拍照失败：${failure.sequenceId}, ${failure.reason}")
             }
 
             override fun onCaptureCompleted(

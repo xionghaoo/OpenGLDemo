@@ -47,7 +47,7 @@
         <activity
             android:name=".camera1.Camera1Activity"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="userLandscape" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -61,7 +61,7 @@
         <activity
             android:name=".camerax.CameraXActivity"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="userLandscape" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

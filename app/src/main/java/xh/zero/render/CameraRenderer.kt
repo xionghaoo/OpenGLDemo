@@ -93,7 +93,7 @@ class CameraRenderer(
         aTextureCoord = shaderProgram.getAttribute("aCoord")
 
         // 根据摄像头本身的角度不同，这个旋转可能不需要
-        initialTransformMatrix(TransformType.NONE)
+        initialTransformMatrix(TransformType.ROTATE)
 
         externalTextureID = OpenGLUtil.createExternalTexture()
         // 创建一个接收相机预览的texture
