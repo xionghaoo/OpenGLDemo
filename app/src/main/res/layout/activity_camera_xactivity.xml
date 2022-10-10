@@ -4,13 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/grey"
     tools:context=".camerax.CameraXActivity">
 
     <FrameLayout
         android:id="@+id/fragment_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"/>
+        android:layout_width="100dp"
+        android:layout_height="80dp"
+        android:layout_gravity="top|end"/>
 
     <Button
         android:id="@+id/btn_capture"

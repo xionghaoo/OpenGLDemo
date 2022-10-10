@@ -18,7 +18,9 @@ import android.widget.FrameLayout
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.children
 import androidx.window.WindowManager
+import kotlinx.coroutines.*
 import timber.log.Timber
 import xh.zero.ImageActivity
 import xh.zero.R
@@ -51,12 +53,19 @@ class CameraXActivity : BaseCameraActivity<ActivityCameraXactivityBinding>(),
 //                ImageActivity.start(this, path, requestedOrientation)
 //            }
             isCapture = true
+//            showContent(false)
+//            CoroutineScope(Dispatchers.Default).launch {
+//                delay(500)
+//                withContext(Dispatchers.Main) {
+//
+//                }
+//            }
         }
     }
 
     override fun getBindingView(): ActivityCameraXactivityBinding = ActivityCameraXactivityBinding.inflate(layoutInflater)
 
-    override fun getCameraFragmentLayout(): ViewGroup = binding.fragmentContainer
+    override fun getCameraFragmentLayout(): ViewGroup? = null
 
     override fun onCameraAreaCreated(
         cameraId: String,
@@ -86,6 +95,18 @@ class CameraXActivity : BaseCameraActivity<ActivityCameraXactivityBinding>(),
             ImageActivity.start(this, file.absolutePath, requestedOrientation)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    private fun showContent(isShow: Boolean) {
+        if (isShow) {
+            binding.root.children.forEach { v ->
+                v.visibility = View.VISIBLE
+            }
+        } else {
+            binding.root.children.forEach { v ->
+                v.visibility = View.INVISIBLE
+            }
         }
     }
 

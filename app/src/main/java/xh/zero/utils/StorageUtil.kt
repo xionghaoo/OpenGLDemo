@@ -1,4 +1,4 @@
-package xh.zero.camera.utils
+package xh.zero.utils
 
 import android.content.Context
 import android.content.pm.PackageManager
