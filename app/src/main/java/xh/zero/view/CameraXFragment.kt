@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toFile
 import androidx.viewbinding.ViewBinding
 import androidx.window.WindowManager
+import timber.log.Timber
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -203,6 +204,7 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
             .setJpegQuality(100)
             .build()
 
+//        captureSize = Size(2592, 1944)
         if (captureSize != null) {
             // ImageAnalysis 用例
             imageAnalyzer = ImageAnalysis.Builder()
@@ -222,7 +224,7 @@ abstract class CameraXFragment<VIEW: ViewBinding> : BaseCameraFragment<VIEW>() {
                             imageRotationDegrees = image.imageInfo.rotationDegrees
                             bitmapBuffer = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
                         }
-//                        Timber.d("ImageAnalysis: image width: ${image.width}, height: ${image.height}, rotation: ${image.imageInfo.rotationDegrees}")
+                        Timber.d("ImageAnalysis: image width: ${image.width}, height: ${image.height}, rotation: ${image.imageInfo.rotationDegrees}")
                         image.use { bitmapBuffer.copyPixelsFromBuffer(image.planes[0].buffer) }
                         // 拿到的图片是逆时针转了90度的图，这里修正它
 //                        val matrix = Matrix()

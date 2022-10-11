@@ -50,7 +50,7 @@ abstract class BaseCameraActivity<V: ViewBinding> : AppCompatActivity() {
             Timber.d("可用摄像头id: $cameraId")
             val characteristic = cameraManager.getCameraCharacteristics(cameraId)
             // 打开第一个摄像头
-            if (index == 0) {
+            if (index == 1) {
                 val configurationMap = characteristic.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
                 configurationMap?.getOutputSizes(ImageFormat.JPEG)
                     ?.maxByOrNull { it.height * it.width }
